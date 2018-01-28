@@ -1,0 +1,183 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0304
+header_name {.h}
+code_name {.cxx}
+decl {\#include <FL/Fl_Double_Window.H>} {public global
+}
+
+decl {\#include <FL/Fl_Text_Editor.H>} {public global
+}
+
+decl {\#include <FL/Fl_Menu_Bar.H>} {public global
+}
+
+decl {\#include <FL/Fl_Button.H>} {public global
+}
+
+decl {\#include <FL/Fl_File_Chooser.H>} {public global
+}
+
+decl {// \#include <FL/Fl_Native_File_Chooser.H>} {public global
+}
+
+decl {\#include <errno.h>} {public global
+}
+
+decl {char const *SHELL = "\#!/bin/sh\\n";} {private global
+}
+
+decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
+}
+
+decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
+}
+
+Function {save_file(const char *newfile)} {open return_type void
+} {
+  code {// fl_alert("Saving to file %s", newfile);
+if (buff->savefile(newfile)) {
+  fl_alert("Error writing to file \\'%s\\':\\n%s.", newfile, strerror(errno));
+} else {
+  strcpy(filename, newfile);
+  strcpy(title, newfile);
+  win->label(title);
+  char chmod[FL_PATH_MAX + 9];
+  sprintf(chmod, "chmod +x %s", newfile);
+  system(chmod);
+}} {}
+}
+
+Function {shebang(void)} {open return_type void
+} {
+  code {int firstline, current_pos;
+current_pos = edit->insert_position();
+// search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
+int found = buff->search_forward(0, "\\n", &firstline);
+if (found) {
+  buff->select(0, firstline+1);
+  buff->remove_selection();
+  buff->insert(0, SHELL);
+  edit->insert_position(current_pos + strlen(SHELL) - firstline - 1);
+  edit->show_insert_position();
+}
+
+/*if (found) {
+  // Found a match; update the position and replace text...
+  textbuf->select(pos, pos+strlen(find));
+  textbuf->remove_selection();
+  textbuf->insert(pos, replace);
+  textbuf->select(pos, pos+strlen(replace));
+  e->editor->insert_position(pos+strlen(replace));
+  e->editor->show_insert_position();
+}*/} {}
+}
+
+Function {buffer_init(void)} {open return_type void
+} {
+  code {// attach buffer to  editor
+buff->text(SHELL);
+edit->buffer(buff);
+edit->insert_position(10);
+edit->show_insert_position();} {}
+}
+
+Function {save_cb(void)} {open return_type void
+} {
+  code {if (filename[0] == '\\0') {
+  // No filename
+  saveas_cb();
+  return;
+} else {
+  save_file(filename);
+}} {}
+}
+
+Function {saveas_cb(void)} {open
+} {
+  code {char *sfa;
+sfa = fl_file_chooser("Save File As ?", "*", filename);
+if(sfa != NULL) save_file(sfa);} {}
+}
+
+Function {open_cb()} {open return_type void
+} {
+  code {char *newfile = fl_file_chooser("Open File ?", "*", filename);
+if (newfile != NULL) load_file(newfile);} {}
+}
+
+Function {load_file(char *newfile)} {open return_type void
+} {
+  code {int lf;
+lf = buff->loadfile(newfile);
+if (lf) {
+  fl_alert("Error while loading file \\'%s\\':\\n%s.", newfile, strerror(errno));
+} else {
+  strcpy(filename, newfile);
+  strcpy(title, newfile);
+  win->label(title);
+}} {selected
+  }
+}
+
+Function {} {open
+} {
+  Fl_Window win {open
+    xywh {374 279 425 320} type Double box PLASTIC_UP_BOX hide resizable
+  } {
+    Fl_Text_Editor edit {
+      xywh {1 29 424 288} box PLASTIC_DOWN_FRAME textfont 4 textsize 20 resizable
+    }
+    Fl_Menu_Bar menu_bar {open
+      xywh {0 0 425 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
+    } {
+      Submenu file_menu {
+        label {&File} open
+        xywh {0 0 67 24}
+      } {
+        MenuItem new_bt {
+          label {&New File}
+          callback {buff->text(SHELL);
+  strcpy(filename, "\\0");
+  strcpy(title, "\\0");
+  win->label(title);}
+          xywh {0 0 34 24} shortcut 0x4006e
+        }
+        MenuItem open {
+          label {&Open}
+          callback {open_cb();}
+          xywh {0 0 100 20} shortcut 0x4006f
+        }
+        MenuItem save {
+          label {&Save}
+          callback {save_cb();}
+          xywh {0 0 100 20} shortcut 0x40073
+        }
+        MenuItem saveas {
+          label {Save &As}
+          callback {saveas_cb();}
+          xywh {0 0 34 24} shortcut 0x50073
+        }
+      }
+      Submenu shell_menu {
+        label {&Shell} open
+        xywh {0 0 67 24}
+      } {
+        MenuItem sh {
+          label {POSIX sh}
+          callback {SHELL = "\#!/bin/sh\\n";
+  shebang();}
+          xywh {0 0 34 24} shortcut 0x80073
+        }
+        MenuItem bash {
+          label {ENV bash}
+          callback {SHELL = "\#!/usr/bin/env bash\\n";
+  shebang();}
+          xywh {0 0 34 24} shortcut 0x80062
+        }
+      }
+    }
+  }
+  code {// editor init
+win->label(title);
+buffer_init();} {}
+}
