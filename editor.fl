@@ -2,6 +2,9 @@
 version 1.0304
 header_name {.h}
 code_name {.cxx}
+comment {author polikuo 2018} {in_source in_header
+}
+
 decl {\#include <FL/Fl_Double_Window.H>} {public global
 }
 
@@ -17,9 +20,6 @@ decl {\#include <FL/Fl_Button.H>} {public global
 decl {\#include <FL/Fl_File_Chooser.H>} {public global
 }
 
-decl {// \#include <FL/Fl_Native_File_Chooser.H>} {public global
-}
-
 decl {\#include <errno.h>} {public global
 }
 
@@ -32,22 +32,16 @@ decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
 decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
 }
 
-Function {save_file(const char *newfile)} {open return_type void
+Function {buffer_init(void)} {return_type void
 } {
-  code {// fl_alert("Saving to file %s", newfile);
-if (buff->savefile(newfile)) {
-  fl_alert("Error writing to file \\'%s\\':\\n%s.", newfile, strerror(errno));
-} else {
-  strcpy(filename, newfile);
-  strcpy(title, newfile);
-  win->label(title);
-  char chmod[FL_PATH_MAX + 9];
-  sprintf(chmod, "chmod +x %s", newfile);
-  system(chmod);
-}} {}
+  code {// attach buffer to  editor
+buff->text(SHELL);
+edit->buffer(buff);
+edit->insert_position(10);
+edit->show_insert_position();} {}
 }
 
-Function {shebang(void)} {open return_type void
+Function {shebang(void)} {return_type void
 } {
   code {int firstline, current_pos;
 current_pos = edit->insert_position();
@@ -59,53 +53,75 @@ if (found) {
   buff->insert(0, SHELL);
   edit->insert_position(current_pos + strlen(SHELL) - firstline - 1);
   edit->show_insert_position();
-}
-
-/*if (found) {
-  // Found a match; update the position and replace text...
-  textbuf->select(pos, pos+strlen(find));
-  textbuf->remove_selection();
-  textbuf->insert(pos, replace);
-  textbuf->select(pos, pos+strlen(replace));
-  e->editor->insert_position(pos+strlen(replace));
-  e->editor->show_insert_position();
-}*/} {}
-}
-
-Function {buffer_init(void)} {open return_type void
-} {
-  code {// attach buffer to  editor
-buff->text(SHELL);
-edit->buffer(buff);
-edit->insert_position(10);
-edit->show_insert_position();} {}
-}
-
-Function {save_cb(void)} {open return_type void
-} {
-  code {if (filename[0] == '\\0') {
-  // No filename
-  saveas_cb();
-  return;
 } else {
-  save_file(filename);
+  // no newline char
+  buff->text(SHELL);
+  edit->insert_position(strlen(SHELL));
+  edit->show_insert_position();
 }} {}
 }
 
-Function {saveas_cb(void)} {open
+Function {new_cb()} {return_type void
+} {
+  code {buff->text(SHELL);
+strcpy(filename, "\\0");
+strcpy(title, "\\0");
+win->label(title);
+// buff_init();} {}
+}
+
+Function {save_file(const char *newfile)} {return_type void
+} {
+  code {// Save file
+// auto append trailing "\\n"
+int buff_end;
+buff_end = buff->length();
+char last_char;
+last_char = buff->char_at(buff_end - 1);
+if (last_char != 10) {
+  buff->append("\\n");
+  edit->insert_position(buff_end + 1);
+  edit->show_insert_position();
+}
+// fl_alert("Saving to file %s", newfile);
+if (buff->savefile(newfile)) {
+  fl_alert("Error writing to file \\'%s\\':\\n%s.", newfile, strerror(errno));
+} else {
+  strcpy(filename, newfile);
+  strcpy(title, newfile);
+  win->label(title);
+  \#ifdef __linux__
+    char chmod[FL_PATH_MAX + 9];
+    sprintf(chmod, "chmod +x %s", newfile);
+    system(chmod);
+  \#endif
+}} {}
+}
+
+Function {saveas_cb(void)} {return_type void
 } {
   code {char *sfa;
 sfa = fl_file_chooser("Save File As ?", "*", filename);
 if(sfa != NULL) save_file(sfa);} {}
 }
 
-Function {open_cb()} {open return_type void
+Function {save_cb(void)} {return_type void
+} {
+  code {if (filename[0] == '\\0') {
+  // No filename
+  saveas_cb();
+} else {
+  save_file(filename);
+}} {}
+}
+
+Function {open_cb()} {return_type void
 } {
   code {char *newfile = fl_file_chooser("Open File ?", "*", filename);
 if (newfile != NULL) load_file(newfile);} {}
 }
 
-Function {load_file(char *newfile)} {open return_type void
+Function {load_file(char *newfile)} {return_type void
 } {
   code {int lf;
 lf = buff->loadfile(newfile);
@@ -115,8 +131,761 @@ if (lf) {
   strcpy(filename, newfile);
   strcpy(title, newfile);
   win->label(title);
-}} {selected
+}} {}
+}
+
+decl {bool color = false;} {private global
+}
+
+decl {Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();} {private global
+}
+
+decl {\#define TS 14} {private global
+}
+
+comment {Style table
+A - Plain
+B - busybox
+C - special_characters
+D - bourne_function
+E - bourne_constructs
+F - Strings (Quotes)
+G - escapes
+H - bourne_variables
+I - comments} {in_source not_in_header
+}
+
+decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
+  { FL_BLACK,FL_COURIER,TS },
+  { FL_DARK_CYAN,FL_COURIER_BOLD, TS },
+  { FL_DARK_YELLOW,FL_COURIER_BOLD, TS },
+  { FL_BLUE, FL_COURIER_BOLD, TS },
+  { FL_DARK_MAGENTA, FL_COURIER_BOLD, TS },
+  { FL_DARK_GREEN, FL_COURIER,TS },
+  { FL_DARK_BLUE,FL_COURIER,TS },
+  { FL_DARK_RED, FL_COURIER_BOLD, TS },
+  { FL_GRAY, FL_HELVETICA_ITALIC, TS }
+};} {private global
+}
+
+Function {style_unfinished_cb(int, void*)} {open return_type void
+} {
+  comment {do nothing} {in_source not_in_header
   }
+  code {// fl_alert("style_unfinished_cb");} {}
+}
+
+Function {style_parse(const char *text, char *style, int length)} {open return_type void
+} {
+  comment {do nothing} {in_source not_in_header
+  }
+  code {char current, buf[8192], *temp;
+int col, last;
+int shebang;
+for (shebang=0;shebang<10;shebang++) {
+  buff[shebang] = 'I';
+}
+
+for (current = *style, col=0, last=0;length > 0;length--, text++) {
+  current = 'B';
+}} {}
+}
+
+Function {style_update(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg)} {open return_type void
+} {
+  comment {- inactive -
+(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg)
+pos - Position of update
+nInserted - Number of inserted chars
+nDeleted - Number of deleted chars
+nRestyled - Number of restyled chars
+*deletedText - Text that was deleted
+*cbArg - Callback data} {in_source not_in_header
+  }
+  code {/*
+fl_alert("pos:%d, nInserted:%d,\\nnDeleted:%d,nRestyled:%d,\\ndeletedText:\\n%s",
+pos, nInserted, nDeleted, nRestyled, deletedText);
+fl_alert("nRestyled:%d,\\ndeletedText:\\n%s", nRestyled, deletedText);
+*/} {}
+  code {/*
+// Start, End of text
+int start, end;
+// Last style on line, Style data, Text data
+char last, *style, *text;
+
+// If this is just a selection change, just unselect the style buffer...
+if (nInserted == 0 && nDeleted == 0) {
+  stylebuf->unselect();
+  return;
+}
+// Track changes in the text buffer...
+if (nInserted > 0) {
+  // Insert characters into the style buffer...
+  style = new char[nInserted + 1];
+  memset(style, 'A', nInserted);
+  style[nInserted] = '\\0';
+  stylebuf->replace(pos, pos + nDeleted, style);
+  delete[] style;
+} else {
+  // Just delete characters in the style buffer...
+  stylebuf->remove(pos, pos + nDeleted);
+}
+// Select the area that was just updated to avoid unnecessary
+// callbacks...
+stylebuf->select(pos, pos + nInserted - nDeleted);
+// Re-parse the changed region; we do this by parsing from the
+// beginning of the line of the changed region to the end of
+// the line of the changed region...Then we check the last
+// style character and keep updating if we have a multi-line
+// comment character...
+start = buff->line_start(pos);
+end = buff->line_end(pos + nInserted - nDeleted);
+text = buff->text_range(start, end);
+style = stylebuf->text_range(start, end);
+last = style[end - start - 1];
+style_parse(text, style, end - start);
+stylebuf->replace(start, end, style);
+((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+if (last != style[end - start - 1]) {
+  // The last character on the line changed styles, so reparse the
+  // remainder of the buffer...
+  free(text);
+  free(style);
+  end = buff->length();
+  text= buff->text_range(start, end);
+  style = stylebuf->text_range(start, end);
+  style_parse(text, style, end - start);
+  stylebuf->replace(start, end, style);
+  ((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+}
+free(text);
+free(style);
+*/} {}
+}
+
+Function {use_coloring()} {open return_type void
+} {
+  code {// busybox
+// List of known busybox commands...
+// https://busybox.net/downloads/BusyBox.html
+const char *busybox[] = {
+  "acpid",
+  "addgroup",
+  "adduser",
+  "adjtimex",
+  "ar",
+  "arp",
+  "arping",
+  "ash",
+  "awk",
+  "basename",
+  "beep",
+  "blkid",
+  "brctl",
+  "bunzip2",
+  "busybox",
+  "bzcat",
+  "bzip2",
+  "cal",
+  "cat",
+  "catv",
+  "chat",
+  "chattr",
+  "chgrp",
+  "chmod",
+  "chown",
+  "chpasswd",
+  "chpst",
+  "chroot",
+  "chrt",
+  "chvt",
+  "cksum",
+  "clear",
+  "cmp",
+  "comm",
+  "cp",
+  "cpio",
+  "crond",
+  "crontab",
+  "cryptpw",
+  "cut",
+  "date",
+  "dc",
+  "dd",
+  "deallocvt",
+  "delgroup",
+  "deluser",
+  "depmod",
+  "devmem",
+  "df",
+  "dhcprelay",
+  "diff",
+  "dirname",
+  "dmesg",
+  "dnsd",
+  "dnsdomainname",
+  "dos2unix",
+  "dpkg",
+  "du",
+  "dumpkmap",
+  "dumpleases",
+  "echo",
+  "ed",
+  "egrep",
+  "eject",
+  "env",
+  "envdir",
+  "envuidgid",
+  "expand",
+  "expr",
+  "fakeidentd",
+  "false",
+  "fbset",
+  "fbsplash",
+  "fdflush",
+  "fdformat",
+  "fdisk",
+  "fgrep",
+  "find",
+  "findfs",
+  "flash_lock",
+  "flash_unlock",
+  "fold",
+  "free",
+  "freeramdisk",
+  "fsck",
+  "fsck.minix",
+  "fsync",
+  "ftpd",
+  "ftpget",
+  "ftpput",
+  "fuser",
+  "getopt",
+  "getty",
+  "grep",
+  "gunzip",
+  "gzip",
+  "hd",
+  "hdparm",
+  "head",
+  "hexdump",
+  "hostid",
+  "hostname",
+  "httpd",
+  "hush",
+  "hwclock",
+  "id",
+  "ifconfig",
+  "ifdown",
+  "ifenslave",
+  "ifplugd",
+  "ifup",
+  "inetd",
+  "init",
+  "inotifyd",
+  "insmod",
+  "install",
+  "ionice",
+  "ip",
+  "ipaddr",
+  "ipcalc",
+  "ipcrm",
+  "ipcs",
+  "iplink",
+  "iproute",
+  "iprule",
+  "iptunnel",
+  "kbd_mode",
+  "kill",
+  "killall",
+  "killall5",
+  "klogd",
+  "last",
+  "length",
+  "less",
+  "linux32",
+  "linux64",
+  "linuxrc",
+  "ln",
+  "loadfont",
+  "loadkmap",
+  "logger",
+  "login",
+  "logname",
+  "logread",
+  "losetup",
+  "lpd",
+  "lpq",
+  "lpr",
+  "ls",
+  "lsattr",
+  "lsmod",
+  "lzmacat",
+  "lzop",
+  "lzopcat",
+  "makemime",
+  "man",
+  "md5sum",
+  "mdev",
+  "mesg",
+  "microcom",
+  "mkdir",
+  "mkdosfs",
+  "mkfifo",
+  "mkfs.minix",
+  "mkfs.vfat",
+  "mknod",
+  "mkpasswd",
+  "mkswap",
+  "mktemp",
+  "modprobe",
+  "more",
+  "mount",
+  "mountpoint",
+  "mt",
+  "mv",
+  "nameif",
+  "nc",
+  "netstat",
+  "nice",
+  "nmeter",
+  "nohup",
+  "nslookup",
+  "od",
+  "openvt",
+  "passwd",
+  "patch",
+  "pgrep",
+  "pidof",
+  "ping",
+  "ping6",
+  "pipe_progress",
+  "pivot_root",
+  "pkill",
+  "popmaildir",
+  "printenv",
+  "printf",
+  "ps",
+  "pscan",
+  "pwd",
+  "raidautorun",
+  "rdate",
+  "rdev",
+  "readlink",
+  "readprofile",
+  "realpath",
+  "reformime",
+  "renice",
+  "reset",
+  "resize",
+  "rm",
+  "rmdir",
+  "rmmod",
+  "route",
+  "rpm",
+  "rpm2cpio",
+  "rtcwake",
+  "run-parts",
+  "runlevel",
+  "runsv",
+  "runsvdir",
+  "rx",
+  "script",
+  "scriptreplay",
+  "sed",
+  "sendmail",
+  "seq",
+  "setarch",
+  "setconsole",
+  "setfont",
+  "setkeycodes",
+  "setlogcons",
+  "setsid",
+  "setuidgid",
+  "sh",
+  "sha1sum",
+  "sha256sum",
+  "sha512sum",
+  "showkey",
+  "slattach",
+  "sleep",
+  "softlimit",
+  "sort",
+  "split",
+  "start-stop-daemon",
+  "stat",
+  "strings",
+  "stty",
+  "su",
+  "sulogin",
+  "sum",
+  "sv",
+  "svlogd",
+  "swapoff",
+  "swapon",
+  "switch_root",
+  "sync",
+  "sysctl",
+  "syslogd",
+  "tac",
+  "tail",
+  "tar",
+  "taskset",
+  "tcpsvd",
+  "tee",
+  "telnet",
+  "telnetd",
+  "test",
+  "tftp",
+  "tftpd",
+  "time",
+  "timeout",
+  "top",
+  "touch",
+  "tr",
+  "traceroute",
+  "true",
+  "tty",
+  "ttysize",
+  "udhcpc",
+  "udhcpd",
+  "udpsvd",
+  "umount",
+  "uname",
+  "uncompress",
+  "unexpand",
+  "uniq",
+  "unix2dos",
+  "unlzma",
+  "unlzop",
+  "unzip",
+  "uptime",
+  "usleep",
+  "uudecode",
+  "uuencode",
+  "vconfig",
+  "vi",
+  "vlock",
+  "volname",
+  "watch",
+  "watchdog",
+  "wc",
+  "wget",
+  "which",
+  "who",
+  "whoami",
+  "xargs",
+  "yes",
+  "zcat",
+  "zcip"
+};} {}
+  code {// special_characters
+// Just a bunch of special characters
+const char *special_characters[] = {
+  "!",
+  "@",
+  "\#",
+  "$",
+  "%",
+  "^",
+  "&",
+  "*",
+  "(",
+  ")",
+  "+",
+  "-",
+  "/",
+  "=",
+  "|",
+  "\\\\",
+  "\\?",
+  ":",
+  ",",
+  ".",
+  "[",
+  "]",
+  "{",
+  "}",
+  "`",
+  "\\'",
+  "\\""
+};} {}
+  code {// bourne_builtins
+const char *bourne_function[] = { // List of known bourne shell built-in functions...
+  "alias",
+  "break",
+  "cd",
+  "continue",
+  "eval",
+  "exec",
+  "exit",
+  "export",
+  "getopts",
+  "hash",
+  "pwd",
+  "readonly",
+  "return",
+  "shift",
+  "source",
+  "test",
+  "times",
+  "trap",
+  "umask",
+  "unset"
+};
+const char *bourne_constructs[] = { // List of known bourne shell constructs...
+  "case",
+  "do",
+  "done",
+  "elif",
+  "esac",
+  "fi",
+  "for",
+  "if",
+  "in",
+  "select",
+  "then",
+  "until",
+  "while"
+};
+const char *bourne_variables[] = { // List of known bourne shell built-in variables...
+  "~",
+  "HOME",
+  "IFS",
+  "OPTARG",
+  "OPTIND",
+  "PATH",
+  "PS1",
+  "PS2",
+  "PWD",
+  "SHLVL"
+};} {}
+  code {// associate style & buffer
+edit->highlight_data(
+  stylebuf,
+  styletable,
+  sizeof(styletable) / sizeof(styletable[0]),
+  'A',
+  style_unfinished_cb,
+  0
+);
+// buff->add_modify_callback(style_update, edit);
+buff->add_modify_callback(modification_cb, edit);} {}
+}
+
+Function {disable_color()} {open return_type void
+} {
+  code {buff->remove_modify_callback(modification_cb, edit);
+// hopefully disable the style thing
+stylebuf->text("");
+// edit->highlight_data(NULL, NULL, NULL, NULL, NULL);} {}
+}
+
+Function {modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg)} {open return_type void
+} {
+  code {int current_pos;
+current_pos = edit->insert_position();} {}
+  code {if (nInserted == 0 && nDeleted == 0) {
+  stylebuf->unselect();
+  return;
+}
+fl_alert("pos:%d\\nnInserted:%d\\nnDeleted:%d\\nnRestyled:%d\\ndeletedText:\\n%s",
+pos, nInserted, nDeleted, nRestyled, deletedText);} {}
+  code {// newline auto indent
+if (nInserted == 1 && buff->char_at(pos) == 10) {
+  int lsp = buff->line_start(pos); // line start pos
+  int lep = buff->line_end(pos); // line end pos
+  char *indention;
+  indention = new char[lep - lsp + 1];
+  char *line = buff->line_text(pos);
+  int i;
+  for (i=0;i<(lep - lsp);i++) {
+    // tab || space
+    if (line[i] == 9 || line[i] == 32) indention[i] = line[i];
+    else break;
+  }
+  indention[i] = '\\0';
+  fl_alert("line:%s\\nauto_indent:'%s', pos = %d", line, indention, pos);
+  buff->insert(pos+1, indention);
+  // stylebuf is one char slower than buff
+  stylebuf->insert(pos, "\\n");
+  stylebuf->insert(pos+1, indention);
+  current_pos += strlen(indention);
+  delete[] indention;
+  free(line);
+}} {}
+  code {edit->insert_position(current_pos);
+edit->show_insert_position();} {}
+  comment {catch exception} {in_source not_in_header
+  }
+  codeblock {if (buff->length() != stylebuf->length())} {open
+  } {
+    code {fl_alert(
+  "Exception occure\\nbuff->length = %d\\nstylebuf->length = %d",
+  buff->length(),
+  stylebuf->length()
+);} {}
+  }
+}
+
+Function {ts_cb()} {return_type void
+} {
+  code {fl_alert("%d", buff->length());
+fl_alert("%s", buff->text());} {}
+}
+
+Function {ss_cb()} {return_type void
+} {
+  code {fl_alert("%d", stylebuf->length());
+fl_alert("%s", stylebuf->text());} {}
+}
+
+Function {buff_init()} {open return_type void
+} {
+  code {// shebang style
+char *style_init;
+style_init = new char[buff->length() + 1];
+// style_init = new char[buff->length() + 1];
+int j = strlen(SHELL);
+memset(style_init, 'I', j);
+style_init[j-1] = 10; // newline} {}
+  code {char *buff_copy;
+// get a copy of current buffer
+buff_copy = buff->text();
+/*
+sh syntax notes:
+X=something
+echo $X ----> something
+echo $X\# ---> something\#
+echo "\\" ---> unterminated quoted string
+echo "\\'" --> \\'
+echo '\\' ---> \\
+echo '\\'' --> unterminated quoted string
+echo "'"' --> looking for matching '
+echo '"'"' -> looking for matching "
+echo "'"'"' > '"
+echo '"'"'" > "'
+possible combination:
+both T should never happens
+sq = F, dq = F;
+sq = T, dq = F;
+sq = F, dq = T;
+style 'S': invisible chars
+*/
+bool cm = false; // \#comment 35
+// bool es = false; // \\escapes 92
+bool ds = false; // $dolor_sign 36
+bool se = false; // $\{shell expansion\}, ds must be true
+bool sq = false; // 'single quote' 39
+bool dq = false; // "double quote" 34
+int bq = 0; // `back quote command substitution` 96
+int cs = 0; // $(command substitution)
+int p = 0; // (parentheses)
+int sb = 0; // [square brackets]
+int cb = 0; // \{curly brackets\}
+for (;j < buff->length(); j++) \{
+  // default
+  style_init[j] = 'A';
+  // condition
+  if (buff_copy[j] == 35) \{
+    // \#comment
+    // if (!ds && !es && !sq && !dq) \{
+    if (!ds && !sq && !dq) \{
+      cm = true;
+    \}
+  \}
+  if (cm) \{
+    if (buff_copy[j] == 10) \{
+      style_init[j] = 'S';
+      cm = false;
+      continue;
+    \}
+    style_init[j] = 'I';
+    continue;
+  \} else \{
+    if (sq) \{
+      style_init[j] = 'F';
+      if (buff_copy[j] == 39) sq = false;
+      continue;
+    \}
+    if (dq) \{
+      style_init[j] = 'F';
+      if (buff_copy[j] == 34) \{
+        dq = false;
+        if (ds) \{
+          ds = false;
+        \}
+        continue;
+      \}
+    \}
+    if (buff_copy[j] == 39) \{
+      // 'single quote' ignore escapes
+      if (!dq) \{
+        // if not "double quote"
+        style_init[j] = 'F';
+        sq = true;
+        continue;
+      \}
+    \}
+    if (buff_copy[j] == 34) \{
+      // "double quote" escapes
+      if (!sq) \{
+        // if not 'single quote'
+        style_init[j] = 'F';
+        dq = true;
+        continue;
+      \}
+    \}
+    if (buff_copy[j] == 92) \{
+      // \\escapes
+      style_init[j] = 'G';
+      j++;
+      style_init[j] = 'G';
+      continue;
+    \}
+    if (buff_copy[j] == 36) \{
+      if (buff_copy[j+1] == 36) \{
+        // built-in variable $$
+        style_init[j] = 'H';
+        j++;
+        style_init[j] = 'H';
+        ds = false; // just in case
+        continue;
+      \}
+      ds = true;
+    \}
+  \}
+  if (ds) \{
+    style_init[j] = 'H';
+    if (buff_copy[j+1] == 9 || buff_copy[j+1] == 10 || buff_copy[j+1] == 32) \{
+      // tab or newline or space
+      j++;
+      style_init[j] = 'S';
+      ds = false; // just in case
+    \}
+    continue;
+  \}
+\}
+// newly allocated text buffer - must be free'd
+free(buff_copy);} {selected
+  }
+  code {style_init[buff->length()] = '\\0';
+stylebuf->text(style_init);
+delete[] style_init;} {}
+}
+
+Function {color_cb()} {open return_type void
+} {
+  code {color = ! color;
+if (color) {
+  buff_init();
+  use_coloring();
+  color_switch->label("No Color");
+} else {
+  disable_color();
+  color_switch->label("Color");
+  edit->redisplay_range(0, buff->length());
+}} {}
 }
 
 Function {} {open
@@ -131,15 +900,12 @@ Function {} {open
       xywh {0 0 425 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     } {
       Submenu file_menu {
-        label {&File} open
+        label {&File}
         xywh {0 0 67 24}
       } {
         MenuItem new_bt {
           label {&New File}
-          callback {buff->text(SHELL);
-  strcpy(filename, "\\0");
-  strcpy(title, "\\0");
-  win->label(title);}
+          callback {new_cb();}
           xywh {0 0 34 24} shortcut 0x4006e
         }
         MenuItem open {
@@ -159,7 +925,7 @@ Function {} {open
         }
       }
       Submenu shell_menu {
-        label {&Shell} open
+        label {&Shell}
         xywh {0 0 67 24}
       } {
         MenuItem sh {
@@ -174,6 +940,36 @@ Function {} {open
   shebang();}
           xywh {0 0 34 24} shortcut 0x80062
         }
+      }
+      MenuItem color_switch {
+        label Color
+        callback {color_cb();}
+        xywh {0 0 30 20} shortcut 0x80063
+      }
+      MenuItem color_btn {
+        label Coloring
+        callback {use_coloring();}
+        xywh {0 0 30 20} hide deactivate
+      }
+      MenuItem ts_btn {
+        label {Text size}
+        callback {ts_cb();}
+        xywh {0 0 30 20} hide deactivate
+      }
+      MenuItem ss_btn {
+        label {Style size}
+        callback {ss_cb();}
+        xywh {0 0 30 20} hide deactivate
+      }
+      MenuItem buf_init_btn {
+        label Buff_init
+        callback {buff_init();}
+        xywh {0 0 30 20} hide deactivate
+      }
+      MenuItem no_color {
+        label {No color}
+        callback {disable_color();}
+        xywh {0 0 30 20} hide deactivate
       }
     }
   }

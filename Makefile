@@ -3,6 +3,8 @@ INSTDIR = $(DESTDIR)/$(PREFIX)/bin
 
 TARGET = editor
 OBJ = editor.o
+#TARGET = temp
+#OBJ = temp.o
 
 ARCH := $(shell uname -m)
 CXX_FLAGS_i686 := -march=i486 -mtune=i686
