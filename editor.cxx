@@ -38,7 +38,19 @@ void new_cb() {
   strcpy(filename, "\0");
   strcpy(title, "\0");
   win->label(title);
-  // buff_init();
+  // coloring
+  color_cb();
+  /*
+  if (color) {
+    buff_init();
+    use_coloring();
+    color_switch->label("NoColor");
+  } else {
+    disable_color();
+    color_switch->label("Colorful");
+    edit->redisplay_range(0, buff->length());
+  }
+  */
 }
 
 void save_file(const char *newfile) {
@@ -97,6 +109,7 @@ void load_file(char *newfile) {
     strcpy(filename, newfile);
     strcpy(title, newfile);
     win->label(title);
+    color_cb();
   }
 }
 bool color = false; 
@@ -108,116 +121,36 @@ Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();
 // C - special_characters
 // D - bourne_function
 // E - bourne_constructs
-// F - Strings (Quotes)
-// G - escapes
-// H - bourne_variables
-// I - comments
+// F - Single Quotes
+// G - Double Quotes
+// H - escapes
+// I - bourne_variables
+// J - comments
 Fl_Text_Display::Style_Table_Entry styletable[] = {
   { FL_BLACK,FL_COURIER,TS },
   { FL_DARK_CYAN,FL_COURIER_BOLD, TS },
   { FL_DARK_YELLOW,FL_COURIER_BOLD, TS },
   { FL_BLUE, FL_COURIER_BOLD, TS },
-  { FL_DARK_MAGENTA, FL_COURIER_BOLD, TS },
+  { FL_DARK_BLUE, FL_COURIER_BOLD, TS },
+  { FL_GREEN, FL_COURIER,TS },
   { FL_DARK_GREEN, FL_COURIER,TS },
-  { FL_DARK_BLUE,FL_COURIER,TS },
+  { FL_BLUE,FL_COURIER,TS },
   { FL_DARK_RED, FL_COURIER_BOLD, TS },
-  { FL_GRAY, FL_HELVETICA_ITALIC, TS }
+  { FL_GRAY, FL_COURIER_ITALIC, TS }
 }; 
 
 void style_unfinished_cb(int, void*) {
-// do nothing
+// NULL call back for highlight data
+// fl_alert("style_unfinished_cb");
   // fl_alert("style_unfinished_cb");
 }
 
-void style_parse(const char *text, char *style, int length) {
-// do nothing
-  char current, buf[8192], *temp;
-  int col, last;
-  int shebang;
-  for (shebang=0;shebang<10;shebang++) {
-    buff[shebang] = 'I';
-  }
-  
-  for (current = *style, col=0, last=0;length > 0;length--, text++) {
-    current = 'B';
-  }
-}
+const char * busybox() {
+// busybox
+// List of known busybox commands...
+// https://busybox.net/downloads/BusyBox.html
 
-void style_update(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg) {
-// - inactive -
-// (int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg)
-// pos - Position of update
-// nInserted - Number of inserted chars
-// nDeleted - Number of deleted chars
-// nRestyled - Number of restyled chars
-// *deletedText - Text that was deleted
-// *cbArg - Callback data
-  /*
-  fl_alert("pos:%d, nInserted:%d,\nnDeleted:%d,nRestyled:%d,\ndeletedText:\n%s",
-  pos, nInserted, nDeleted, nRestyled, deletedText);
-  fl_alert("nRestyled:%d,\ndeletedText:\n%s", nRestyled, deletedText);
-  */
-  /*
-  // Start, End of text
-  int start, end;
-  // Last style on line, Style data, Text data
-  char last, *style, *text;
-  
-  // If this is just a selection change, just unselect the style buffer...
-  if (nInserted == 0 && nDeleted == 0) {
-    stylebuf->unselect();
-    return;
-  }
-  // Track changes in the text buffer...
-  if (nInserted > 0) {
-    // Insert characters into the style buffer...
-    style = new char[nInserted + 1];
-    memset(style, 'A', nInserted);
-    style[nInserted] = '\0';
-    stylebuf->replace(pos, pos + nDeleted, style);
-    delete[] style;
-  } else {
-    // Just delete characters in the style buffer...
-    stylebuf->remove(pos, pos + nDeleted);
-  }
-  // Select the area that was just updated to avoid unnecessary
-  // callbacks...
-  stylebuf->select(pos, pos + nInserted - nDeleted);
-  // Re-parse the changed region; we do this by parsing from the
-  // beginning of the line of the changed region to the end of
-  // the line of the changed region...Then we check the last
-  // style character and keep updating if we have a multi-line
-  // comment character...
-  start = buff->line_start(pos);
-  end = buff->line_end(pos + nInserted - nDeleted);
-  text = buff->text_range(start, end);
-  style = stylebuf->text_range(start, end);
-  last = style[end - start - 1];
-  style_parse(text, style, end - start);
-  stylebuf->replace(start, end, style);
-  ((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
-  if (last != style[end - start - 1]) {
-    // The last character on the line changed styles, so reparse the
-    // remainder of the buffer...
-    free(text);
-    free(style);
-    end = buff->length();
-    text= buff->text_range(start, end);
-    style = stylebuf->text_range(start, end);
-    style_parse(text, style, end - start);
-    stylebuf->replace(start, end, style);
-    ((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
-  }
-  free(text);
-  free(style);
-  */
-}
-
-void use_coloring() {
-  // busybox
-  // List of known busybox commands...
-  // https://busybox.net/downloads/BusyBox.html
-  const char *busybox[] = {
+  const char *applets[] = {
     "acpid",
     "addgroup",
     "adduser",
@@ -528,37 +461,71 @@ void use_coloring() {
     "zcat",
     "zcip"
   };
-  // special_characters
-  // Just a bunch of special characters
-  const char *special_characters[] = {
-    "!",
-    "@",
-    "#",
-    "$",
-    "%",
-    "^",
-    "&",
-    "*",
-    "(",
-    ")",
-    "+",
-    "-",
-    "/",
-    "=",
-    "|",
-    "\\",
-    "\?",
-    ":",
-    ",",
-    ".",
-    "[",
-    "]",
-    "{",
-    "}",
-    "`",
-    "\'",
-    "\""
-  };
+  return *applets;
+}
+
+int is_special(char ascii) {
+  // 33~47, 58~64, 91~96, 123~126
+  if (ascii > 32 && ascii < 48) return 1;
+  if (ascii > 57 && ascii < 65) return 2;
+  if (ascii > 90 && ascii < 97) return 3;
+  if (ascii > 122 && ascii < 127) return 4;
+  return 0;
+// Just a bunch of special characters
+// Old bloated codes
+// const char *special_characters[] = {
+//   "!", // 33
+//   "\"", // 34
+//   "#", // 35
+//   "$", // 36
+//   "%", // 37
+//   "&", // 38
+//   "\'", // 39
+//   "(", // 40
+//   ")", // 41
+//   "*", // 42
+//   "+", // 43
+//   ",", // 44
+//   "-", // 45
+//   ".", // 46
+//   "/", // 47
+//   ":", // 58
+//   ";", // 59
+//   "<", // 60
+//   "=", // 61
+//   ">", // 62
+//   "\?", // 63
+//   "@", // 64
+//   "[", // 91
+//   "\\", // 92
+//   "]", // 93
+//   "^", // 94
+//   "_", // 95 usually treated as normal string
+//   "`", // 96
+//   "{", // 123
+//   "|", // 124
+//   "}" // 125
+//   "~" // 126 $HOME
+// };
+// size_t list_size, prb;
+// list_size = sizeof(special_characters) / sizeof(*special_characters);
+
+// assign probe
+// const char *probe;
+// probe = special_characters[0];
+
+// convert to pointer
+// const char *cmp;
+// cmp = &ascii;
+
+// for (prb = 0; prb < list_size; prb++) {
+//   if (strcmp(cmp, probe) == 0) return 1;
+//   *probe++;
+// }
+// return 0;
+}
+
+void use_coloring() {
   // bourne_builtins
   const char *bourne_function[] = { // List of known bourne shell built-in functions...
     "alias",
@@ -636,10 +603,23 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
     stylebuf->unselect();
     return;
   }
+  /*
   fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
   pos, nInserted, nDeleted, nRestyled, deletedText);
+  */
+  // Insertion / deletion
+  if (nInserted > 0) {
+    char *cacheIN;
+    cacheIN = new char[nInserted+1];
+    memset(cacheIN, 'A', nInserted);
+    cacheIN[nInserted] = '\0';
+    stylebuf->replace(current_pos, current_pos + nDeleted, cacheIN);
+    delete[] cacheIN;
+  } else {
+    stylebuf->remove(pos, pos + nDeleted);
+  }
   // newline auto indent
-  if (nInserted == 1 && buff->char_at(pos) == 10) {
+  if (nInserted == 1 && buff->char_at(pos) == 10 && nDeleted == 0) {
     int lsp = buff->line_start(pos); // line start pos
     int lep = buff->line_end(pos); // line end pos
     char *indention;
@@ -652,11 +632,13 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
       else break;
     }
     indention[i] = '\0';
-    fl_alert("line:%s\nauto_indent:'%s', pos = %d", line, indention, pos);
+    // fl_alert("line:%s\nauto_indent:'%s', pos = %d", line, indention, pos);
     buff->insert(pos+1, indention);
+    /* the "Insertion / deletion" section already handle the act
     // stylebuf is one char slower than buff
     stylebuf->insert(pos, "\n");
     stylebuf->insert(pos+1, indention);
+    */
     current_pos += strlen(indention);
     delete[] indention;
     free(line);
@@ -687,143 +669,269 @@ void buff_init() {
   // shebang style
   char *style_init;
   style_init = new char[buff->length() + 1];
-  // style_init = new char[buff->length() + 1];
+  style_init[buff->length()] = '\0';
   int j = strlen(SHELL);
-  memset(style_init, 'I', j);
+  memset(style_init, 'J', j);
   style_init[j-1] = 10; // newline
-  char *buff_copy;
+// sh syntax notes:
+// X=something
+// echo $X ----> something
+// echo $X# ---> something#
+// echo "\" ---> unterminated quoted string
+// echo "\'" --> \' single quote in double quote does not escape
+// echo '\' ---> \ treated literal
+// echo '\'' --> unterminated quoted string
+// echo "'"' --> looking for matching '
+// echo '"'"' -> looking for matching "
+// echo "'"'"' > '"
+// echo '"'"'" > "'
+// possible combination:
+// both T should never happens
+// sq = F, dq = F;
+// sq = T, dq = F;
+// sq = F, dq = T;
+// style 'S': invisible chars
+
   // get a copy of current buffer
+  char *buff_copy;
   buff_copy = buff->text();
-  /*
-  sh syntax notes:
-  X=something
-  echo $X ----> something
-  echo $X# ---> something#
-  echo "\" ---> unterminated quoted string
-  echo "\'" --> \'
-  echo '\' ---> \
-  echo '\'' --> unterminated quoted string
-  echo "'"' --> looking for matching '
-  echo '"'"' -> looking for matching "
-  echo "'"'"' > '"
-  echo '"'"'" > "'
-  possible combination:
-  both T should never happens
-  sq = F, dq = F;
-  sq = T, dq = F;
-  sq = F, dq = T;
-  style 'S': invisible chars
-  */
+  
   bool cm = false; // #comment 35
-  // bool es = false; // \escapes 92
+  bool es = false; // \escapes 92
   bool ds = false; // $dolor_sign 36
   bool se = false; // ${shell expansion}, ds must be true
+  bool bq = false; // `back quote command substitution` 96
   bool sq = false; // 'single quote' 39
   bool dq = false; // "double quote" 34
-  int bq = 0; // `back quote command substitution` 96
   int cs = 0; // $(command substitution)
-  int p = 0; // (parentheses)
-  int sb = 0; // [square brackets]
-  int cb = 0; // {curly brackets}
+  int p = 0; // (parentheses) 40 41
+  // int sb = 0; // [square brackets] 91 93
+  // int cb = 0; // {curly brackets} 123 125
+  
   for (;j < buff->length(); j++) {
-    // default
-    style_init[j] = 'A';
-    // condition
-    if (buff_copy[j] == 35) {
-      // #comment
-      // if (!ds && !es && !sq && !dq) {
-      if (!ds && !sq && !dq) {
-        cm = true;
-      }
-    }
-    if (cm) {
-      if (buff_copy[j] == 10) {
-        style_init[j] = 'S';
-        cm = false;
+    switch(buff_copy[j]) {
+      case 10: // newline
+        if (cm) cm = !cm;
+      case 9: // tab
+      case 32: // space
+        if (ds) ds = !ds;
+        style_init[j] = buff_copy[j];
         continue;
-      }
+      case 35: // #comment
+        if (!ds && !sq && !dq && !se) {
+          cm = true;
+          style_init[j] = 'J';
+        }
+        break;
+      case 92: // \escapes
+        if (cm || sq) break;
+        es = true;
+        break; // other escape
+      case 39: // 'single quote'
+        if (cm) break;
+        // single quote is always
+        // treated literally in double quote
+        if (!dq) {
+          sq = !sq;
+          style_init[j] = 'F';
+          continue;
+        }
+        break;
+      case 34: // "double quote"
+        if (cm) break;
+        if (!sq) {
+          dq = !dq;
+          style_init[j] = 'G';
+          if (ds) ds = !ds;
+          continue;
+        }
+        break;
+      case 96: // `back quote`
+        if (cm || sq) break;
+        style_init[j] = 'E';
+        ds = false;
+        bq = !bq;
+        break;
+      case 36: // $dolor_sign
+        if (cm || sq) break;
+        ds = true;
+        switch(buff_copy[j+1]) {
+          case 33: // built-in variable $!
+          case 35: // built-in variable $#
+          case 36: // built-in variable $$
+          case 42: // built-in variable $*
+          case 45: // built-in variable $-
+          case 63: // built-in variable $?
+          case 64: // built-in variable $@
+          case 95: // built-in variable $_
+            style_init[j] = 'I';
+            j++;
+            style_init[j] = 'I';
+            ds = false;
+            continue;
+          case 40: // $(...
+            cs++;
+            p++;
+            style_init[j] = 'E';
+            j++;
+            style_init[j] = 'E';
+            ds = false;
+            continue;
+          case 123: // shell expansion ${
+            // cb++;
+            se = true; // a bit redundant
+            style_init[j] = 'I';
+            j++;
+            style_init[j] = 'I';
+            ds = true;
+            continue;
+          case 9: // tab
+          case 10: // newline
+          case 32: // space
+            // trailing dolor_sign$
+            ds = false;
+            // use default
+            style_init[j] = 'A';
+            continue;
+        }
+        style_init[j] = 'I';
+        if (is_special(style_init[j+1])) {
+          // invalid variable $, or such
+          ds = false;
+          style_init[j] = 'A';
+        }
+        break;
+      case 40: // (
+        if (cm || sq || dq) break;
+        p++;
+        style_init[j] = 'C';
+        break;
+      case 41: // )
+        if (cm || sq) break;
+        if (ds) ds = !ds;
+        if (dq) {
+          if (cs == 0)
+          break;
+        }
+        p--;
+        style_init[j] = 'C';
+        break;
+      case 123: // {
+        style_init[j] = 'C';
+        break;
+      case 125: // }
+        if (cm || sq) break;
+        if (ds || se) {
+          // end of variable
+          ds = false;
+          se = false;
+          style_init[j] = 'I';
+          continue;
+        }
+        style_init[j] = 'C';
+        break;
+      default:
+        if (cm || es || sq) break;
+        style_init[j] = 'A';
+    }
+    if (se) {
       style_init[j] = 'I';
       continue;
-    } else {
-      if (sq) {
-        style_init[j] = 'F';
-        if (buff_copy[j] == 39) sq = false;
-        continue;
-      }
-      if (dq) {
-        style_init[j] = 'F';
-        if (buff_copy[j] == 34) {
-          dq = false;
-          if (ds) {
-            ds = false;
-          }
-          continue;
-        }
-      }
-      if (buff_copy[j] == 39) {
-        // 'single quote' ignore escapes
-        if (!dq) {
-          // if not "double quote"
-          style_init[j] = 'F';
-          sq = true;
-          continue;
-        }
-      }
-      if (buff_copy[j] == 34) {
-        // "double quote" escapes
-        if (!sq) {
-          // if not 'single quote'
-          style_init[j] = 'F';
-          dq = true;
-          continue;
-        }
-      }
-      if (buff_copy[j] == 92) {
-        // \escapes
-        style_init[j] = 'G';
-        j++;
-        style_init[j] = 'G';
-        continue;
-      }
-      if (buff_copy[j] == 36) {
-        if (buff_copy[j+1] == 36) {
-          // built-in variable $$
-          style_init[j] = 'H';
-          j++;
-          style_init[j] = 'H';
-          ds = false; // just in case
-          continue;
-        }
-        ds = true;
-      }
     }
-    if (ds) {
-      style_init[j] = 'H';
-      if (buff_copy[j+1] == 9 || buff_copy[j+1] == 10 || buff_copy[j+1] == 32) {
-        // tab or newline or space
-        j++;
-        style_init[j] = 'S';
-        ds = false; // just in case
+    if (cm) {
+      switch (buff_copy[j]) {
+        case 10: // newline
+          cm = false;
+        case 9: // tab
+        case 32: // space
+          style_init[j] = buff_copy[j];
+          break;
+        default:
+          style_init[j] = 'J';
       }
       continue;
     }
+    if (sq) {
+      // 'single quote' ignore escapes
+      style_init[j] = 'F';
+      if (buff_copy[j] == 39) sq = !sq;
+      continue;
+    }
+    if (dq) style_init[j] = 'G';
+    if (ds) {
+      style_init[j] = 'I';
+      if (is_special(style_init[j+1]) > 0) {
+        // if (is_special()) --> glitchy
+        // end of variable
+        ds = false;
+        continue;
+      }
+    }
+    if (es) {
+      // this char = backslash (92)
+      if (buff_copy[j+1]) {
+        // char not null
+        style_init[j] = 'H';
+        style_init[j+1] = 'H';
+      }
+      if (dq && buff_copy[j+1] == 39) {
+        /* echo "\'" --> \' */
+      }
+      if (buff_copy[j+1] == 120) {
+        // hex \xFF 48~57, 65~70, 97~102
+        bool hex = ((
+          (buff_copy[j+2] > 47 && buff_copy[j+2] < 58) ||
+          (buff_copy[j+2] > 64 && buff_copy[j+2] < 71) ||
+          (buff_copy[j+2] > 96 && buff_copy[j+2] < 103)
+        ) && (
+          (buff_copy[j+3] > 47 && buff_copy[j+3] < 58) ||
+          (buff_copy[j+3] > 64 && buff_copy[j+3] < 71) ||
+          (buff_copy[j+3] > 96 && buff_copy[j+3] < 103)
+        ));
+        if (hex) {
+          style_init[j+2] = 'H';
+          style_init[j+3] = 'H';
+          j+=2;
+        }
+      }
+      j++;
+      es = false;
+      continue;
+    }
+    if (cs>0) {
+      style_init[j] = 'E';
+      if (ds) style_init[j] = 'I';
+      if (buff_copy[j] == 41) {
+        // )
+        style_init[j] = 'E';
+        cs--;
+        if (p > cs) cs++;
+      }
+      // continue;
+    }
+    if (bq) {
+      style_init[j] = 'E';
+      // continue;
+    }
   }
+  
   // newly allocated text buffer - must be free'd
   free(buff_copy);
+  // write to buffer and free
   style_init[buff->length()] = '\0';
   stylebuf->text(style_init);
   delete[] style_init;
 }
 
 void color_cb() {
-  color = ! color;
+  // color = ! color; switching handled by the button
   if (color) {
     buff_init();
     use_coloring();
-    color_switch->label("No Color");
+    color_switch->label("NoColor");
   } else {
     disable_color();
-    color_switch->label("Color");
+    color_switch->label("Colorful");
     edit->redisplay_range(0, buff->length());
   }
 }
@@ -861,11 +969,8 @@ static void cb_bash(Fl_Menu_*, void*) {
 }
 
 static void cb_color_switch(Fl_Menu_*, void*) {
+  color = ! color;
   color_cb();
-}
-
-static void cb_color_btn(Fl_Menu_*, void*) {
-  use_coloring();
 }
 
 static void cb_ts_btn(Fl_Menu_*, void*) {
@@ -874,14 +979,6 @@ static void cb_ts_btn(Fl_Menu_*, void*) {
 
 static void cb_ss_btn(Fl_Menu_*, void*) {
   ss_cb();
-}
-
-static void cb_buf_init_btn(Fl_Menu_*, void*) {
-  buff_init();
-}
-
-static void cb_no_color(Fl_Menu_*, void*) {
-  disable_color();
 }
 
 Fl_Menu_Item menu_menu_bar[] = {
@@ -895,12 +992,9 @@ Fl_Menu_Item menu_menu_bar[] = {
  {"POSIX sh", 0x80073,  (Fl_Callback*)cb_sh, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"ENV bash", 0x80062,  (Fl_Callback*)cb_bash, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
- {"Color", 0x80063,  (Fl_Callback*)cb_color_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Coloring", 0,  (Fl_Callback*)cb_color_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Text size", 0,  (Fl_Callback*)cb_ts_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Style size", 0,  (Fl_Callback*)cb_ss_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Buff_init", 0,  (Fl_Callback*)cb_buf_init_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"No color", 0,  (Fl_Callback*)cb_no_color, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Colorful", 0,  (Fl_Callback*)cb_color_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Text size", 0,  (Fl_Callback*)cb_ts_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Style size", 0,  (Fl_Callback*)cb_ss_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -923,6 +1017,7 @@ int main(int argc, char **argv) {
   // editor init
   win->label(title);
   buffer_init();
+  // if (argc > 1) load_file(argv[1]);
   win->show(argc, argv);
   return Fl::run();
 }

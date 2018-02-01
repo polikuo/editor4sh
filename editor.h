@@ -19,8 +19,8 @@ void save_cb(void);
 void open_cb();
 void load_file(char *newfile);
 void style_unfinished_cb(int, void*);
-void style_parse(const char *text, char *style, int length);
-void style_update(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg);
+const char * busybox();
+int is_special(char ascii);
 void use_coloring();
 void disable_color();
 void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg);
@@ -44,9 +44,6 @@ extern Fl_Menu_Item menu_menu_bar[];
 #define sh (menu_menu_bar+7)
 #define bash (menu_menu_bar+8)
 #define color_switch (menu_menu_bar+10)
-#define color_btn (menu_menu_bar+11)
-#define ts_btn (menu_menu_bar+12)
-#define ss_btn (menu_menu_bar+13)
-#define buf_init_btn (menu_menu_bar+14)
-#define no_color (menu_menu_bar+15)
+#define ts_btn (menu_menu_bar+11)
+#define ss_btn (menu_menu_bar+12)
 #endif

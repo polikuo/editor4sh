@@ -13,6 +13,8 @@ CXXFLAGS += $(CXX_FLAGS_$(ARCH))
 CXXFLAGS += -Os -s -Wall -Wextra
 CXXFLAGS += -fno-rtti -fno-exceptions
 CXXFLAGS += -ffunction-sections -fdata-sections
+# Fl_Text_Display::Style_Table_Entry::attr currently unused, see the manual
+CXXFLAGS += -Wno-missing-field-initializers
 
 LDFLAGS += -Wl,-O1 -Wl,-gc-sections
 LDFLAGS += -Wl,-as-needed
