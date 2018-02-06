@@ -5,8 +5,36 @@
 char const *SHELL = "#!/bin/sh\n"; 
 char filename[FL_PATH_MAX], title[FL_PATH_MAX]; 
 Fl_Text_Buffer *buff = new Fl_Text_Buffer(); 
+bool color = false; 
+Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer(); 
+#define TS 14
+// Style table
+// http://www.fltk.org/doc-1.3/Enumerations_8H.html
+// http://www.fltk.org/doc-1.3/fltk-colormap.png
+// A - Plain
+// B - busybox
+// C - special_characters
+// D - bourne_function
+// E - bourne_constructs
+// F - Single Quotes
+// G - Double Quotes
+// H - escapes
+// I - bourne_variables
+// J - comments
+Fl_Text_Display::Style_Table_Entry styletable[] = {
+  { FL_BLACK, FL_COURIER, TS },
+  { 82, FL_COURIER_BOLD, TS },
+  { FL_DARK3, FL_COURIER,TS },
+  { 92, FL_COURIER_BOLD, TS },
+  { FL_DARK_GREEN, FL_COURIER, TS },
+  { FL_BLUE,FL_COURIER_BOLD, TS },
+  { FL_DARK_BLUE, FL_COURIER,TS },
+  { FL_DARK_YELLOW, FL_COURIER,TS },
+  { FL_DARK_RED, FL_COURIER_BOLD, TS },
+  { FL_DARK2, FL_COURIER_ITALIC, TS }
+}; 
 
-void buffer_init(void) {
+void buffer_init() {
   // attach buffer to  editor
   buff->text(SHELL);
   edit->buffer(buff);
@@ -14,7 +42,7 @@ void buffer_init(void) {
   edit->show_insert_position();
 }
 
-void shebang(void) {
+void shebang() {
   int firstline, current_pos;
   current_pos = edit->insert_position();
   // search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
@@ -34,23 +62,19 @@ void shebang(void) {
 }
 
 void new_cb() {
-  buff->text(SHELL);
-  strcpy(filename, "\0");
-  strcpy(title, "\0");
-  win->label(title);
   // coloring
-  color_cb();
-  /*
   if (color) {
-    buff_init();
-    use_coloring();
-    color_switch->label("NoColor");
+    color_cb(); // called twice
+    buff->text(SHELL);
+    color_cb(); // to refresh
   } else {
-    disable_color();
-    color_switch->label("Colorful");
-    edit->redisplay_range(0, buff->length());
+    buff->text(SHELL);
   }
-  */
+  edit->insert_position(strlen(SHELL));
+  edit->show_insert_position();
+  strcpy(filename, "");
+  strcpy(title, "");
+  win->label(title);
 }
 
 void save_file(const char *newfile) {
@@ -80,14 +104,14 @@ void save_file(const char *newfile) {
   }
 }
 
-void saveas_cb(void) {
+void saveas_cb() {
   char *sfa;
   sfa = fl_file_chooser("Save File As ?", "*", filename);
   if(sfa != NULL) save_file(sfa);
 }
 
-void save_cb(void) {
-  if (filename[0] == '\0') {
+void save_cb() {
+  if (filename[0] == 0) {
     // No filename
     saveas_cb();
   } else {
@@ -101,51 +125,42 @@ void open_cb() {
 }
 
 void load_file(char *newfile) {
+  if (color) { // disable color
+    disable_color();
+    color_switch->label("Colorful");
+    edit->redisplay_range(0, buff->length());
+  }
   int lf;
   lf = buff->loadfile(newfile);
   if (lf) {
     fl_alert("Error while loading file \'%s\':\n%s.", newfile, strerror(errno));
+    if (color) {
+      stylebuf_init();
+      use_coloring();
+      color_switch->label("NoColor");
+    }
   } else {
     strcpy(filename, newfile);
     strcpy(title, newfile);
     win->label(title);
-    color_cb();
+    if (color) {
+      stylebuf_init();
+      use_coloring();
+      color_switch->label("NoColor");
+    }
   }
 }
-bool color = false; 
-Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer(); 
-#define TS 14
-// Style table
-// A - Plain
-// B - busybox
-// C - special_characters
-// D - bourne_function
-// E - bourne_constructs
-// F - Single Quotes
-// G - Double Quotes
-// H - escapes
-// I - bourne_variables
-// J - comments
-Fl_Text_Display::Style_Table_Entry styletable[] = {
-  { FL_BLACK,FL_COURIER,TS },
-  { FL_DARK_CYAN,FL_COURIER_BOLD, TS },
-  { FL_DARK_YELLOW,FL_COURIER_BOLD, TS },
-  { FL_BLUE, FL_COURIER_BOLD, TS },
-  { FL_DARK_BLUE, FL_COURIER_BOLD, TS },
-  { FL_GREEN, FL_COURIER,TS },
-  { FL_DARK_GREEN, FL_COURIER,TS },
-  { FL_BLUE,FL_COURIER,TS },
-  { FL_DARK_RED, FL_COURIER_BOLD, TS },
-  { FL_GRAY, FL_COURIER_ITALIC, TS }
-}; 
 
 void style_unfinished_cb(int, void*) {
-// NULL call back for highlight data
+// call back for highlight data
+// if style 'A' is found,
+// this call back will be called.
+// void *cbArg will be passed as arguement
+
 // fl_alert("style_unfinished_cb");
-  // fl_alert("style_unfinished_cb");
 }
 
-const char * busybox() {
+void busybox() {
 // busybox
 // List of known busybox commands...
 // https://busybox.net/downloads/BusyBox.html
@@ -461,15 +476,28 @@ const char * busybox() {
     "zcat",
     "zcip"
   };
-  return *applets;
 }
 
 int is_special(char ascii) {
   // 33~47, 58~64, 91~96, 123~126
-  if (ascii > 32 && ascii < 48) return 1;
-  if (ascii > 57 && ascii < 65) return 2;
-  if (ascii > 90 && ascii < 97) return 3;
-  if (ascii > 122 && ascii < 127) return 4;
+  if (ascii == 95) {
+    // 95 _ usually treated as normal string
+    // only exception $_
+    // already handled
+    return 0;
+  }
+  if (ascii > 32 && ascii < 48) {
+    return 1;
+  }
+  if (ascii > 57 && ascii < 65) {
+    return 2;
+  }
+  if (ascii > 90 && ascii < 97) {
+    return 3;
+  }
+  if (ascii > 122 && ascii < 127) {
+    return 4;
+  }
   return 0;
 // Just a bunch of special characters
 // Old bloated codes
@@ -525,154 +553,13 @@ int is_special(char ascii) {
 // return 0;
 }
 
-void use_coloring() {
-  // bourne_builtins
-  const char *bourne_function[] = { // List of known bourne shell built-in functions...
-    "alias",
-    "break",
-    "cd",
-    "continue",
-    "eval",
-    "exec",
-    "exit",
-    "export",
-    "getopts",
-    "hash",
-    "pwd",
-    "readonly",
-    "return",
-    "shift",
-    "source",
-    "test",
-    "times",
-    "trap",
-    "umask",
-    "unset"
-  };
-  const char *bourne_constructs[] = { // List of known bourne shell constructs...
-    "case",
-    "do",
-    "done",
-    "elif",
-    "esac",
-    "fi",
-    "for",
-    "if",
-    "in",
-    "select",
-    "then",
-    "until",
-    "while"
-  };
-  const char *bourne_variables[] = { // List of known bourne shell built-in variables...
-    "~",
-    "HOME",
-    "IFS",
-    "OPTARG",
-    "OPTIND",
-    "PATH",
-    "PS1",
-    "PS2",
-    "PWD",
-    "SHLVL"
-  };
-  // associate style & buffer
-  edit->highlight_data(
-    stylebuf,
-    styletable,
-    sizeof(styletable) / sizeof(styletable[0]),
-    'A',
-    style_unfinished_cb,
-    0
-  );
-  // buff->add_modify_callback(style_update, edit);
-  buff->add_modify_callback(modification_cb, edit);
-}
-
-void disable_color() {
-  buff->remove_modify_callback(modification_cb, edit);
-  // hopefully disable the style thing
-  stylebuf->text("");
-  // edit->highlight_data(NULL, NULL, NULL, NULL, NULL);
-}
-
-void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg) {
-  int current_pos;
-  current_pos = edit->insert_position();
-  if (nInserted == 0 && nDeleted == 0) {
-    stylebuf->unselect();
-    return;
-  }
-  /*
-  fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
-  pos, nInserted, nDeleted, nRestyled, deletedText);
-  */
-  // Insertion / deletion
-  if (nInserted > 0) {
-    char *cacheIN;
-    cacheIN = new char[nInserted+1];
-    memset(cacheIN, 'A', nInserted);
-    cacheIN[nInserted] = '\0';
-    stylebuf->replace(current_pos, current_pos + nDeleted, cacheIN);
-    delete[] cacheIN;
-  } else {
-    stylebuf->remove(pos, pos + nDeleted);
-  }
-  // newline auto indent
-  if (nInserted == 1 && buff->char_at(pos) == 10 && nDeleted == 0) {
-    int lsp = buff->line_start(pos); // line start pos
-    int lep = buff->line_end(pos); // line end pos
-    char *indention;
-    indention = new char[lep - lsp + 1];
-    char *line = buff->line_text(pos);
-    int i;
-    for (i=0;i<(lep - lsp);i++) {
-      // tab || space
-      if (line[i] == 9 || line[i] == 32) indention[i] = line[i];
-      else break;
-    }
-    indention[i] = '\0';
-    // fl_alert("line:%s\nauto_indent:'%s', pos = %d", line, indention, pos);
-    buff->insert(pos+1, indention);
-    /* the "Insertion / deletion" section already handle the act
-    // stylebuf is one char slower than buff
-    stylebuf->insert(pos, "\n");
-    stylebuf->insert(pos+1, indention);
-    */
-    current_pos += strlen(indention);
-    delete[] indention;
-    free(line);
-  }
-  edit->insert_position(current_pos);
-  edit->show_insert_position();
-// catch exception
-  if (buff->length() != stylebuf->length()) {
-    fl_alert(
-      "Exception occure\nbuff->length = %d\nstylebuf->length = %d",
-      buff->length(),
-      stylebuf->length()
-    );
-  }
-}
-
-void ts_cb() {
-  fl_alert("%d", buff->length());
-  fl_alert("%s", buff->text());
-}
-
-void ss_cb() {
-  fl_alert("%d", stylebuf->length());
-  fl_alert("%s", stylebuf->text());
-}
-
-void buff_init() {
+void stylebuf_init() {
   // shebang style
   char *style_init;
   style_init = new char[buff->length() + 1];
-  style_init[buff->length()] = '\0';
-  int j = strlen(SHELL);
+  int j = buff->line_end(0);
   memset(style_init, 'J', j);
-  style_init[j-1] = 10; // newline
+  style_init[j] = 10; // newline
 // sh syntax notes:
 // X=something
 // echo $X ----> something
@@ -788,6 +675,7 @@ void buff_init() {
           case 9: // tab
           case 10: // newline
           case 32: // space
+          case 47: // regular expression /$/
             // trailing dolor_sign$
             ds = false;
             // use default
@@ -795,7 +683,7 @@ void buff_init() {
             continue;
         }
         style_init[j] = 'I';
-        if (is_special(style_init[j+1])) {
+        if (is_special(buff_copy[j+1])) {
           // invalid variable $, or such
           ds = false;
           style_init[j] = 'A';
@@ -833,6 +721,7 @@ void buff_init() {
       default:
         if (cm || es || sq) break;
         style_init[j] = 'A';
+        if (is_special(buff_copy[j])) style_init[j] = 'C';
     }
     if (se) {
       style_init[j] = 'I';
@@ -860,8 +749,7 @@ void buff_init() {
     if (dq) style_init[j] = 'G';
     if (ds) {
       style_init[j] = 'I';
-      if (is_special(style_init[j+1]) > 0) {
-        // if (is_special()) --> glitchy
+      if (is_special(buff_copy[j+1])) {
         // end of variable
         ds = false;
         continue;
@@ -876,6 +764,8 @@ void buff_init() {
       }
       if (dq && buff_copy[j+1] == 39) {
         /* echo "\'" --> \' */
+        es = false;
+        continue;
       }
       if (buff_copy[j+1] == 120) {
         // hex \xFF 48~57, 65~70, 97~102
@@ -914,19 +804,89 @@ void buff_init() {
       // continue;
     }
   }
-  
-  // newly allocated text buffer - must be free'd
-  free(buff_copy);
   // write to buffer and free
-  style_init[buff->length()] = '\0';
+  style_init[buff->length()] = 0; // '\0'
   stylebuf->text(style_init);
   delete[] style_init;
+  // newly allocated text buffer - must be free'd
+  free(buff_copy);
+}
+
+void use_coloring() {
+  // bourne_builtins
+  const char *bourne_function[] = { // List of known bourne shell built-in functions...
+    "alias",
+    "break",
+    "cd",
+    "continue",
+    "eval",
+    "exec",
+    "exit",
+    "export",
+    "getopts",
+    "hash",
+    "pwd",
+    "readonly",
+    "return",
+    "shift",
+    "source",
+    "test",
+    "times",
+    "trap",
+    "umask",
+    "unset"
+  };
+  const char *bourne_constructs[] = { // List of known bourne shell constructs...
+    "case",
+    "do",
+    "done",
+    "elif",
+    "esac",
+    "fi",
+    "for",
+    "if",
+    "in",
+    "select",
+    "then",
+    "until",
+    "while"
+  };
+  const char *bourne_variables[] = { // List of known bourne shell built-in variables...
+    "~",
+    "HOME",
+    "IFS",
+    "OPTARG",
+    "OPTIND",
+    "PATH",
+    "PS1",
+    "PS2",
+    "PWD",
+    "SHLVL"
+  };
+  // associate style & buffer
+  edit->highlight_data(
+    stylebuf,
+    styletable,
+    sizeof(styletable) / sizeof(styletable[0]),
+    'A',
+    style_unfinished_cb,
+    (void*)0
+  );
+  // buff->add_modify_callback(style_update, edit);
+  buff->add_modify_callback(modification_cb, edit);
+}
+
+void disable_color() {
+  buff->remove_modify_callback(modification_cb, edit);
+  // hopefully disable the style thing
+  stylebuf->text("");
+  // edit->highlight_data(NULL, NULL, NULL, NULL, NULL);
 }
 
 void color_cb() {
-  // color = ! color; switching handled by the button
+  color = !color;
   if (color) {
-    buff_init();
+    stylebuf_init();
     use_coloring();
     color_switch->label("NoColor");
   } else {
@@ -934,6 +894,163 @@ void color_cb() {
     color_switch->label("Colorful");
     edit->redisplay_range(0, buff->length());
   }
+}
+
+int auto_indent_cb(int lsp, int pos, char *line) {
+// lsp: line start pos
+// pos: insert position
+// line: entire line
+
+  int current_pos = pos + 1; // '\n'
+  char *indention; // '\n'space'\0'
+  indention = new char[current_pos - lsp]; // [pos - lsp + 1]
+  int ai = 0;
+  for (;ai < (current_pos - lsp);ai++) {
+    // tab || space
+    if (line[ai] == 9 || line[ai] == 32) indention[ai] = line[ai];
+    else break;
+  }
+  if (ai == 0) {
+    indention[0] = 10; // '\n'
+    indention[0] = 0; // '\0'
+    stylebuf->replace(current_pos, current_pos, indention);
+    delete[] indention;
+    free(line);
+    return current_pos;
+  }
+  indention[ai] = 0; // '\0'
+  buff->insert(current_pos, indention); // will call modification_cb
+  // stylebuf is one char slower than buff
+  current_pos += strlen(indention);
+  stylebuf->replace(pos + 1, current_pos, indention);
+  // modification_cb already handle the inserted '\n', using "replace"
+  delete[] indention;
+  free(line);
+  return current_pos - 1;
+}
+
+void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg) {
+  int current_pos = pos;
+  // different from pos, a current working pos
+  // selection change
+  if (nInserted == 0 && nDeleted == 0) {
+    stylebuf->unselect();
+    return;
+  }
+  // get a copy of current buffer
+  char *style_copy;
+  style_copy = stylebuf->text();
+  // Debug
+  /*
+  fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
+  pos, nInserted, nDeleted, nRestyled, deletedText);
+  fl_alert("current buffer: '%c'\ncurrent style: '%c' \ncurrent_pos: '%d'",
+  buff->char_at(pos), stylebuf->char_at(pos), current_pos);
+  */
+// Insertion / deletion
+// if (nInserted > 0) {
+//   char *cacheIN;
+//   cacheIN = new char[nInserted+1];
+//   memset(cacheIN, 'A', nInserted);
+//   cacheIN[nInserted] = 0; // '\0'
+//   stylebuf->replace(current_pos, current_pos + nDeleted, cacheIN);
+//   delete[] cacheIN;
+// } else {
+//   stylebuf->remove(pos, pos + nDeleted);
+// }
+  if (nInserted > 1) {
+    char *cacheIN;
+    cacheIN = new char[nInserted+1];
+    memset(cacheIN, 'A', nInserted);
+    if (style_copy[pos-1] == 'F' && style_copy[pos] == 'F') {
+      // between single quotes
+      memset(cacheIN, 'F', nInserted);
+    }
+    cacheIN[nInserted] = 0; // '\0'
+    // stylebuf->replace(current_pos, current_pos + nDeleted, cacheIN);
+    stylebuf->replace(current_pos, current_pos, cacheIN);
+    delete[] cacheIN;
+  }
+  if (nInserted == 1) {
+    char *cacheIN;
+    cacheIN = new char[2];
+    cacheIN[0] = buff->char_at(pos); // original char
+    cacheIN[1] = 0; // '\0'
+    bool auto_indent = false;
+    bool sf = true;
+    switch (cacheIN[0]) {
+      case 9:
+      case 32:
+        break; // original char
+      case 10:
+        // newline auto indent
+        auto_indent = true;
+        break; // original char
+      default:
+        if (style_copy[pos-1] == 'F'&& style_copy[pos] == 'F') {
+          // between single quotes
+          cacheIN[0] = 'F';
+          sf = false;
+        } else {
+          cacheIN[0] = 'A';
+        }
+    }
+    stylebuf->insert(pos, cacheIN);
+    if (auto_indent) {
+      current_pos = auto_indent_cb(
+        buff->line_start(pos),
+        pos, // insert position
+        buff->line_text(pos)
+      );
+    }
+    free(cacheIN);
+    if (sf) {
+      scan_forward(pos);
+    }
+  }
+  if (nInserted == 0) {
+    stylebuf->remove(pos, pos + nDeleted);
+// single quotes
+// 'str' --> 'st' ==> just delete
+// 'str' --> st':
+// rescan style of "st"
+// copy the style before it
+// possible style: A,B,C,D,E
+// reset every style after '
+  }
+  edit->insert_position(current_pos);
+  edit->show_insert_position();
+  free(style_copy);
+// catch exception
+  if (buff->length() != stylebuf->length()) {
+    fl_alert(
+      "!!!Exception occur!!!\nbuff->length = %d\nstylebuf->length = %d\nForcing reload...",
+      buff->length(),
+      stylebuf->length()
+    );
+    color_cb();
+    color_cb();
+  }
+  if (nInserted > 0 && nDeleted > 0) {
+    fl_alert("!!!Exception occur!!!\nnInserted > 0 && nDeleted > 0");
+  }
+  // Debug
+  /*
+  fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
+  pos, nInserted, nDeleted, nRestyled, deletedText);
+  fl_alert("current buffer: '%c'\ncurrent style: '%c' \ncurrent_pos: '%d'",
+  buff->char_at(pos), stylebuf->char_at(pos), current_pos);
+  */
+}
+
+void ts_cb() {
+  fl_alert("%d", buff->length());
+  fl_alert("%s", buff->text());
+}
+
+void ss_cb() {
+  fl_alert("%d", stylebuf->length());
+  fl_alert("%s", stylebuf->text());
 }
 
 Fl_Double_Window *win=(Fl_Double_Window *)0;
@@ -969,7 +1086,6 @@ static void cb_bash(Fl_Menu_*, void*) {
 }
 
 static void cb_color_switch(Fl_Menu_*, void*) {
-  color = ! color;
   color_cb();
 }
 
@@ -1020,4 +1136,246 @@ int main(int argc, char **argv) {
   // if (argc > 1) load_file(argv[1]);
   win->show(argc, argv);
   return Fl::run();
+}
+
+void scan_forward(int pos) {
+  int line_start = buff->line_start(pos);
+  char *result;
+  result = new char[buff->length() - line_start + 1];
+  char *buff_copy;
+  buff_copy = buff->text_range(line_start, buff->length()-1);
+  // int s = 0;
+  // char *scan = buff_copy[0];
+  
+  bool cm = false; // #comment 35
+  bool es = false; // \escapes 92
+  bool ds = false; // $dolor_sign 36
+  bool se = false; // ${shell expansion}, ds must be true
+  bool bq = false; // `back quote command substitution` 96
+  bool sq = false; // 'single quote' 39
+  bool dq = false; // "double quote" 34
+  int cs = 0; // $(command substitution)
+  int p = 0; // (parentheses) 40 41
+  // int sb = 0; // [square brackets] 91 93
+  // int cb = 0; // {curly brackets} 123 125
+  /* while (*buff_copy) do ...
+  for (;s < strlen(buff_copy);s++) {
+  }
+  but can it be free'd after moving it till the end ?
+  */
+  int j = line_start;
+  // while (*scan++) {
+  for (;j < buff->length(); j++) {
+    switch(buff_copy[j]) {
+      case 10: // newline
+        fl_alert("Newline:%s", buff->line_text(j));
+        if (cm) cm = !cm;
+      case 9: // tab
+      case 32: // space
+        if (ds) ds = !ds;
+        result[j] = buff_copy[j];
+        continue;
+      case 35: // #comment
+        if (!ds && !sq && !dq && !se) {
+          cm = true;
+          result[j] = 'J';
+        }
+        break;
+      case 92: // \escapes
+        if (cm || sq) break;
+        es = true;
+        break; // other escape
+      case 39: // 'single quote'
+        if (cm) break;
+        // single quote is always
+        // treated literally in double quote
+        if (!dq) {
+          sq = !sq;
+          result[j] = 'F';
+          continue;
+        }
+        break;
+      case 34: // "double quote"
+        if (cm) break;
+        if (!sq) {
+          dq = !dq;
+          result[j] = 'G';
+          if (ds) ds = !ds;
+          continue;
+        }
+        break;
+      case 96: // `back quote`
+        if (cm || sq) break;
+        result[j] = 'E';
+        ds = false;
+        bq = !bq;
+        break;
+      case 36: // $dolor_sign
+        if (cm || sq) break;
+        ds = true;
+        switch(buff_copy[j+1]) {
+          case 33: // built-in variable $!
+          case 35: // built-in variable $#
+          case 36: // built-in variable $$
+          case 42: // built-in variable $*
+          case 45: // built-in variable $-
+          case 63: // built-in variable $?
+          case 64: // built-in variable $@
+          case 95: // built-in variable $_
+            result[j] = 'I';
+            j++;
+            result[j] = 'I';
+            ds = false;
+            continue;
+          case 40: // $(...
+            cs++;
+            p++;
+            result[j] = 'E';
+            j++;
+            result[j] = 'E';
+            ds = false;
+            continue;
+          case 123: // shell expansion ${
+            // cb++;
+            se = true; // a bit redundant
+            result[j] = 'I';
+            j++;
+            result[j] = 'I';
+            ds = true;
+            continue;
+          case 9: // tab
+          case 10: // newline
+          case 32: // space
+          case 47: // regular expression /$/
+            // trailing dolor_sign$
+            ds = false;
+            // use default
+            result[j] = 'A';
+            continue;
+        }
+        result[j] = 'I';
+        if (is_special(buff_copy[j+1])) {
+          // invalid variable $, or such
+          ds = false;
+          result[j] = 'A';
+        }
+        break;
+      case 40: // (
+        if (cm || sq || dq) break;
+        p++;
+        result[j] = 'C';
+        break;
+      case 41: // )
+        if (cm || sq) break;
+        if (ds) ds = !ds;
+        if (dq) {
+          if (cs == 0)
+          break;
+        }
+        p--;
+        result[j] = 'C';
+        break;
+      case 123: // {
+        result[j] = 'C';
+        break;
+      case 125: // }
+        if (cm || sq) break;
+        if (ds || se) {
+          // end of variable
+          ds = false;
+          se = false;
+          result[j] = 'I';
+          continue;
+        }
+        result[j] = 'C';
+        break;
+      default:
+        if (cm || es || sq) break;
+        result[j] = 'A';
+        if (is_special(buff_copy[j])) result[j] = 'C';
+    }
+    if (se) {
+      result[j] = 'I';
+      continue;
+    }
+    if (cm) {
+      switch (buff_copy[j]) {
+        case 10: // newline
+          cm = false;
+        case 9: // tab
+        case 32: // space
+          result[j] = buff_copy[j];
+          break;
+        default:
+          result[j] = 'J';
+      }
+      continue;
+    }
+    if (sq) {
+      // 'single quote' ignore escapes
+      result[j] = 'F';
+      if (buff_copy[j] == 39) sq = !sq;
+      continue;
+    }
+    if (dq) result[j] = 'G';
+    if (ds) {
+      result[j] = 'I';
+      if (is_special(buff_copy[j+1])) {
+        // end of variable
+        ds = false;
+        continue;
+      }
+    }
+    if (es) {
+      // this char = backslash (92)
+      if (buff_copy[j+1]) {
+        // char not null
+        result[j] = 'H';
+        result[j+1] = 'H';
+      }
+      if (dq && buff_copy[j+1] == 39) {
+        /* echo "\'" --> \' */
+        es = false;
+        continue;
+      }
+      if (buff_copy[j+1] == 120) {
+        // hex \xFF 48~57, 65~70, 97~102
+        bool hex = ((
+          (buff_copy[j+2] > 47 && buff_copy[j+2] < 58) ||
+          (buff_copy[j+2] > 64 && buff_copy[j+2] < 71) ||
+          (buff_copy[j+2] > 96 && buff_copy[j+2] < 103)
+        ) && (
+          (buff_copy[j+3] > 47 && buff_copy[j+3] < 58) ||
+          (buff_copy[j+3] > 64 && buff_copy[j+3] < 71) ||
+          (buff_copy[j+3] > 96 && buff_copy[j+3] < 103)
+        ));
+        if (hex) {
+          result[j+2] = 'H';
+          result[j+3] = 'H';
+          j+=2;
+        }
+      }
+      j++;
+      es = false;
+      continue;
+    }
+    if (cs>0) {
+      result[j] = 'E';
+      if (ds) result[j] = 'I';
+      if (buff_copy[j] == 41) {
+        // )
+        result[j] = 'E';
+        cs--;
+        if (p > cs) cs++;
+      }
+      // continue;
+    }
+    if (bq) {
+      result[j] = 'E';
+      // continue;
+    }
+    // *scan++;
+  }
+  
+  free(buff_copy);
 }

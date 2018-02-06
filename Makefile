@@ -15,6 +15,7 @@ CXXFLAGS += -fno-rtti -fno-exceptions
 CXXFLAGS += -ffunction-sections -fdata-sections
 # Fl_Text_Display::Style_Table_Entry::attr currently unused, see the manual
 CXXFLAGS += -Wno-missing-field-initializers
+CXXFLAGS += -Wno-unused-parameter
 
 LDFLAGS += -Wl,-O1 -Wl,-gc-sections
 LDFLAGS += -Wl,-as-needed
