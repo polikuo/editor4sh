@@ -12,6 +12,7 @@
 #include <errno.h>
 void buffer_init();
 void shebang();
+int check_saved(void);
 void new_cb();
 void save_file(const char *newfile);
 void saveas_cb();
@@ -19,14 +20,18 @@ void save_cb();
 void open_cb();
 void load_file(char *newfile);
 void style_unfinished_cb(int, void*);
-void busybox();
+void busybox(char *textbuff, char *scanned_text);
+void bourne_builtins(char *textbuff, char *scanned_text);
 int is_special(char ascii);
-void stylebuf_init();
 void use_coloring();
 void disable_color();
+void auto_indent_switch();
+void stylebuf_init();
 void color_cb();
 int auto_indent_cb(int lsp, int pos, char *line);
+void compare_keywords(char *text, const char *keys[], int elements, char *result, int ascii);
 void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg);
+void close_cb(Fl_Widget*, void* v);
 void ts_cb();
 void ss_cb();
 #include <FL/Fl_Double_Window.H>
@@ -44,8 +49,9 @@ extern Fl_Menu_Item menu_menu_bar[];
 #define shell_menu (menu_menu_bar+6)
 #define sh (menu_menu_bar+7)
 #define bash (menu_menu_bar+8)
-#define color_switch (menu_menu_bar+10)
-#define ts_btn (menu_menu_bar+11)
-#define ss_btn (menu_menu_bar+12)
-void scan_forward(int pos);
+#define plain_text (menu_menu_bar+9)
+#define color_switch (menu_menu_bar+11)
+#define indent_switch (menu_menu_bar+12)
+#define ts_btn (menu_menu_bar+13)
+#define ss_btn (menu_menu_bar+14)
 #endif

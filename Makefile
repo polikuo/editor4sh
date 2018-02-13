@@ -30,7 +30,7 @@ LDFLAGS += $(shell fltk-config --ldflags)
 
 all: $(OBJ)
 	$(CXX) -o $(TARGET) $(OBJ) $(CXXFLAGS) $(LDFLAGS)
-	strip $(TARGET)
+#	strip $(TARGET)
 
 clean:
 	rm -f $(TARGET) $(OBJ)
