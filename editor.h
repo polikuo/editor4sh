@@ -20,21 +20,40 @@ void save_cb();
 void open_cb();
 void load_file(char *newfile);
 void style_unfinished_cb(int, void*);
-void busybox(char *textbuff, char *scanned_text);
-void bourne_builtins(char *textbuff, char *scanned_text);
+int busybox(char *textbuff, char *scanned_text);
+int bourne_builtins(char *textbuff, char *scanned_text);
 int is_special(char ascii);
 void use_coloring();
 void disable_color();
 void auto_indent_switch();
+void auto_indent_cb(int lsp, int pos, char *line);
 void stylebuf_init();
 void color_cb();
-int auto_indent_cb(int lsp, int pos, char *line);
-void compare_keywords(char *text, const char *keys[], int elements, char *result, int ascii);
+int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii);
+void setvars(char *buff_copy, int pos);
+int scan_forward(char *buff_copy, int bufflen, int pos);
 void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg);
 void close_cb(Fl_Widget*, void* v);
 void ts_cb();
 void ss_cb();
+int arg_parser(int argc, char **argv, int &i);
+void find_dialog();
+void find_again_dialog();
 #include <FL/Fl_Double_Window.H>
+extern Fl_Double_Window *replace_dialog_window;
+#include <FL/Fl_Input.H>
+extern Fl_Input *text_in_find;
+extern Fl_Input *text_in_replace;
+#include <FL/Fl_Button.H>
+extern Fl_Button *replace_all_btn;
+#include <FL/Fl_Return_Button.H>
+extern Fl_Return_Button *replace_next_btn;
+extern Fl_Button *RD_cancel_btn;
+Fl_Double_Window* replace_dialog();
+void replace_next_cb();
+void replace_again_cb();
+void replace_all_cb();
+void close_dialog(Fl_Widget*, void* v);
 extern Fl_Double_Window *win;
 #include <FL/Fl_Text_Editor.H>
 extern Fl_Text_Editor *edit;
@@ -52,6 +71,11 @@ extern Fl_Menu_Item menu_menu_bar[];
 #define plain_text (menu_menu_bar+9)
 #define color_switch (menu_menu_bar+11)
 #define indent_switch (menu_menu_bar+12)
-#define ts_btn (menu_menu_bar+13)
-#define ss_btn (menu_menu_bar+14)
+#define search_menu (menu_menu_bar+13)
+#define find_btn (menu_menu_bar+14)
+#define find_again_btn (menu_menu_bar+15)
+#define replace_btn (menu_menu_bar+16)
+#define replace_again_btn (menu_menu_bar+17)
+#define ts_btn (menu_menu_bar+19)
+#define ss_btn (menu_menu_bar+20)
 #endif

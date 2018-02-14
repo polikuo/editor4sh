@@ -175,415 +175,442 @@ void style_unfinished_cb(int, void*) {
 
 // fl_alert("style_unfinished_cb");
 }
-
-void busybox(char *textbuff, char *scanned_text) {
 // busybox
 // List of known busybox commands...
 // https://busybox.net/downloads/BusyBox.html
 
-  const char *applets[] = {
-    "acpid",
-    "addgroup",
-    "adduser",
-    "adjtimex",
-    "ar",
-    "arp",
-    "arping",
-    "ash",
-    "awk",
-    "basename",
-    "beep",
-    "blkid",
-    "brctl",
-    "bunzip2",
-    "busybox",
-    "bzcat",
-    "bzip2",
-    "cal",
-    "cat",
-    "catv",
-    "chat",
-    "chattr",
-    "chgrp",
-    "chmod",
-    "chown",
-    "chpasswd",
-    "chpst",
-    "chroot",
-    "chrt",
-    "chvt",
-    "cksum",
-    "clear",
-    "cmp",
-    "comm",
-    "cp",
-    "cpio",
-    "crond",
-    "crontab",
-    "cryptpw",
-    "cut",
-    "date",
-    "dc",
-    "dd",
-    "deallocvt",
-    "delgroup",
-    "deluser",
-    "depmod",
-    "devmem",
-    "df",
-    "dhcprelay",
-    "diff",
-    "dirname",
-    "dmesg",
-    "dnsd",
-    "dnsdomainname",
-    "dos2unix",
-    "dpkg",
-    "du",
-    "dumpkmap",
-    "dumpleases",
-    "echo",
-    "ed",
-    "egrep",
-    "eject",
-    "env",
-    "envdir",
-    "envuidgid",
-    "expand",
-    "expr",
-    "fakeidentd",
-    "false",
-    "fbset",
-    "fbsplash",
-    "fdflush",
-    "fdformat",
-    "fdisk",
-    "fgrep",
-    "find",
-    "findfs",
-    "flash_lock",
-    "flash_unlock",
-    "fold",
-    "free",
-    "freeramdisk",
-    "fsck",
-    "fsck.minix",
-    "fsync",
-    "ftpd",
-    "ftpget",
-    "ftpput",
-    "fuser",
-    "getopt",
-    "getty",
-    "grep",
-    "gunzip",
-    "gzip",
-    "hd",
-    "hdparm",
-    "head",
-    "hexdump",
-    "hostid",
-    "hostname",
-    "httpd",
-    "hush",
-    "hwclock",
-    "id",
-    "ifconfig",
-    "ifdown",
-    "ifenslave",
-    "ifplugd",
-    "ifup",
-    "inetd",
-    "init",
-    "inotifyd",
-    "insmod",
-    "install",
-    "ionice",
-    "ip",
-    "ipaddr",
-    "ipcalc",
-    "ipcrm",
-    "ipcs",
-    "iplink",
-    "iproute",
-    "iprule",
-    "iptunnel",
-    "kbd_mode",
-    "kill",
-    "killall",
-    "killall5",
-    "klogd",
-    "last",
-    "length",
-    "less",
-    "linux32",
-    "linux64",
-    "linuxrc",
-    "ln",
-    "loadfont",
-    "loadkmap",
-    "logger",
-    "login",
-    "logname",
-    "logread",
-    "losetup",
-    "lpd",
-    "lpq",
-    "lpr",
-    "ls",
-    "lsattr",
-    "lsmod",
-    "lzmacat",
-    "lzop",
-    "lzopcat",
-    "makemime",
-    "man",
-    "md5sum",
-    "mdev",
-    "mesg",
-    "microcom",
-    "mkdir",
-    "mkdosfs",
-    "mkfifo",
-    "mkfs.minix",
-    "mkfs.vfat",
-    "mknod",
-    "mkpasswd",
-    "mkswap",
-    "mktemp",
-    "modprobe",
-    "more",
-    "mount",
-    "mountpoint",
-    "mt",
-    "mv",
-    "nameif",
-    "nc",
-    "netstat",
-    "nice",
-    "nmeter",
-    "nohup",
-    "nslookup",
-    "od",
-    "openvt",
-    "passwd",
-    "patch",
-    "pgrep",
-    "pidof",
-    "ping",
-    "ping6",
-    "pipe_progress",
-    "pivot_root",
-    "pkill",
-    "popmaildir",
-    "printenv",
-    "printf",
-    "ps",
-    "pscan",
-    "pwd",
-    "raidautorun",
-    "rdate",
-    "rdev",
-    "readlink",
-    "readprofile",
-    "realpath",
-    "reformime",
-    "renice",
-    "reset",
-    "resize",
-    "rm",
-    "rmdir",
-    "rmmod",
-    "route",
-    "rpm",
-    "rpm2cpio",
-    "rtcwake",
-    "run-parts",
-    "runlevel",
-    "runsv",
-    "runsvdir",
-    "rx",
-    "script",
-    "scriptreplay",
-    "sed",
-    "sendmail",
-    "seq",
-    "setarch",
-    "setconsole",
-    "setfont",
-    "setkeycodes",
-    "setlogcons",
-    "setsid",
-    "setuidgid",
-    "sh",
-    "sha1sum",
-    "sha256sum",
-    "sha512sum",
-    "showkey",
-    "slattach",
-    "sleep",
-    "softlimit",
-    "sort",
-    "split",
-    "start-stop-daemon",
-    "stat",
-    "strings",
-    "stty",
-    "su",
-    "sulogin",
-    "sum",
-    "sv",
-    "svlogd",
-    "swapoff",
-    "swapon",
-    "switch_root",
-    "sync",
-    "sysctl",
-    "syslogd",
-    "tac",
-    "tail",
-    "tar",
-    "taskset",
-    "tcpsvd",
-    "tee",
-    "telnet",
-    "telnetd",
-    "test",
-    "tftp",
-    "tftpd",
-    "time",
-    "timeout",
-    "top",
-    "touch",
-    "tr",
-    "traceroute",
-    "true",
-    "tty",
-    "ttysize",
-    "udhcpc",
-    "udhcpd",
-    "udpsvd",
-    "umount",
-    "uname",
-    "uncompress",
-    "unexpand",
-    "uniq",
-    "unix2dos",
-    "unlzma",
-    "unlzop",
-    "unzip",
-    "uptime",
-    "usleep",
-    "uudecode",
-    "uuencode",
-    "vconfig",
-    "vi",
-    "vlock",
-    "volname",
-    "watch",
-    "watchdog",
-    "wc",
-    "wget",
-    "which",
-    "who",
-    "whoami",
-    "xargs",
-    "yes",
-    "zcat",
-    "zcip"
-  };
+const char *applets[] = {
+  "acpid",
+  "addgroup",
+  "adduser",
+  "adjtimex",
+  "ar",
+  "arp",
+  "arping",
+  "ash",
+  "awk",
+  "basename",
+  "beep",
+  "blkid",
+  "brctl",
+  "bunzip2",
+  "busybox",
+  "bzcat",
+  "bzip2",
+  "cal",
+  "cat",
+  "catv",
+  "chat",
+  "chattr",
+  "chgrp",
+  "chmod",
+  "chown",
+  "chpasswd",
+  "chpst",
+  "chroot",
+  "chrt",
+  "chvt",
+  "cksum",
+  "clear",
+  "cmp",
+  "comm",
+  "cp",
+  "cpio",
+  "crond",
+  "crontab",
+  "cryptpw",
+  "cut",
+  "date",
+  "dc",
+  "dd",
+  "deallocvt",
+  "delgroup",
+  "deluser",
+  "depmod",
+  "devmem",
+  "df",
+  "dhcprelay",
+  "diff",
+  "dirname",
+  "dmesg",
+  "dnsd",
+  "dnsdomainname",
+  "dos2unix",
+  "dpkg",
+  "du",
+  "dumpkmap",
+  "dumpleases",
+  "echo",
+  "ed",
+  "egrep",
+  "eject",
+  "env",
+  "envdir",
+  "envuidgid",
+  "expand",
+  "expr",
+  "fakeidentd",
+  "false",
+  "fbset",
+  "fbsplash",
+  "fdflush",
+  "fdformat",
+  "fdisk",
+  "fgrep",
+  "find",
+  "findfs",
+  "flash_lock",
+  "flash_unlock",
+  "fold",
+  "free",
+  "freeramdisk",
+  "fsck",
+  "fsck.minix",
+  "fsync",
+  "ftpd",
+  "ftpget",
+  "ftpput",
+  "fuser",
+  "getopt",
+  "getty",
+  "grep",
+  "gunzip",
+  "gzip",
+  "hd",
+  "hdparm",
+  "head",
+  "hexdump",
+  "hostid",
+  "hostname",
+  "httpd",
+  "hush",
+  "hwclock",
+  "id",
+  "ifconfig",
+  "ifdown",
+  "ifenslave",
+  "ifplugd",
+  "ifup",
+  "inetd",
+  "init",
+  "inotifyd",
+  "insmod",
+  "install",
+  "ionice",
+  "ip",
+  "ipaddr",
+  "ipcalc",
+  "ipcrm",
+  "ipcs",
+  "iplink",
+  "iproute",
+  "iprule",
+  "iptunnel",
+  "kbd_mode",
+  "kill",
+  "killall",
+  "killall5",
+  "klogd",
+  "last",
+  "length",
+  "less",
+  "linux32",
+  "linux64",
+  "linuxrc",
+  "ln",
+  "loadfont",
+  "loadkmap",
+  "logger",
+  "login",
+  "logname",
+  "logread",
+  "losetup",
+  "lpd",
+  "lpq",
+  "lpr",
+  "ls",
+  "lsattr",
+  "lsmod",
+  "lzmacat",
+  "lzop",
+  "lzopcat",
+  "makemime",
+  "man",
+  "md5sum",
+  "mdev",
+  "mesg",
+  "microcom",
+  "mkdir",
+  "mkdosfs",
+  "mkfifo",
+  "mkfs.minix",
+  "mkfs.vfat",
+  "mknod",
+  "mkpasswd",
+  "mkswap",
+  "mktemp",
+  "modprobe",
+  "more",
+  "mount",
+  "mountpoint",
+  "mt",
+  "mv",
+  "nameif",
+  "nc",
+  "netstat",
+  "nice",
+  "nmeter",
+  "nohup",
+  "nslookup",
+  "od",
+  "openvt",
+  "passwd",
+  "patch",
+  "pgrep",
+  "pidof",
+  "ping",
+  "ping6",
+  "pipe_progress",
+  "pivot_root",
+  "pkill",
+  "popmaildir",
+  "printenv",
+  "printf",
+  "ps",
+  "pscan",
+  "pwd",
+  "raidautorun",
+  "rdate",
+  "rdev",
+  "readlink",
+  "readprofile",
+  "realpath",
+  "reformime",
+  "renice",
+  "reset",
+  "resize",
+  "rm",
+  "rmdir",
+  "rmmod",
+  "route",
+  "rpm",
+  "rpm2cpio",
+  "rtcwake",
+  "run-parts",
+  "runlevel",
+  "runsv",
+  "runsvdir",
+  "rx",
+  "script",
+  "scriptreplay",
+  "sed",
+  "sendmail",
+  "seq",
+  "setarch",
+  "setconsole",
+  "setfont",
+  "setkeycodes",
+  "setlogcons",
+  "setsid",
+  "setuidgid",
+  "sh",
+  "sha1sum",
+  "sha256sum",
+  "sha512sum",
+  "showkey",
+  "slattach",
+  "sleep",
+  "softlimit",
+  "sort",
+  "split",
+  "start-stop-daemon",
+  "stat",
+  "strings",
+  "stty",
+  "su",
+  "sulogin",
+  "sum",
+  "sv",
+  "svlogd",
+  "swapoff",
+  "swapon",
+  "switch_root",
+  "sync",
+  "sysctl",
+  "syslogd",
+  "tac",
+  "tail",
+  "tar",
+  "taskset",
+  "tcpsvd",
+  "tee",
+  "telnet",
+  "telnetd",
+  "test",
+  "tftp",
+  "tftpd",
+  "time",
+  "timeout",
+  "top",
+  "touch",
+  "tr",
+  "traceroute",
+  "true",
+  "tty",
+  "ttysize",
+  "udhcpc",
+  "udhcpd",
+  "udpsvd",
+  "umount",
+  "uname",
+  "uncompress",
+  "unexpand",
+  "uniq",
+  "unix2dos",
+  "unlzma",
+  "unlzop",
+  "unzip",
+  "uptime",
+  "usleep",
+  "uudecode",
+  "uuencode",
+  "vconfig",
+  "vi",
+  "vlock",
+  "volname",
+  "watch",
+  "watchdog",
+  "wc",
+  "wget",
+  "which",
+  "who",
+  "whoami",
+  "xargs",
+  "yes",
+  "zcat",
+  "zcip"
+}; 
+// bourne_builtins
+// List of known bourne shell built-in variables...
+// List of known bourne shell built-in functions...
+// List of known bourne shell conditional statements...
+const char *bourne_function[] = {
+  "alias",
+  "break",
+  "cd",
+  "continue",
+  "eval",
+  "exec",
+  "exit",
+  "export",
+  "getopts",
+  "hash",
+  "pwd",
+  "read",
+  "readonly",
+  "return",
+  "shift",
+  "source",
+  "test",
+  "times",
+  "trap",
+  "umask",
+  "unset"
+}; 
+const char *bourne_condition[] = {
+  "case",
+  "do",
+  "done",
+  "elif",
+  "esac",
+  "fi",
+  "for",
+  "if",
+  "in",
+  "select",
+  "then",
+  "until",
+  "while"
+}; 
+struct syntax {
+  bool cm; // #comment 35
+  bool es; // \escapes 92
+  bool ds; // $dolor_sign 36
+  bool se; // ${shell expansion}, ds must be true
+  bool bq; // `back quote command substitution` 96
+  bool sq; // 'single quote' 39
+  bool dq; // "double quote" 34
+  int pssp; // previous scan starting position
+  int cs; // $(command substitution)
+  int p; // (parentheses) 40 41
+};
+struct syntax VARS; 
+
+int busybox(char *textbuff, char *scanned_text) {
+  return compare_keywords(
+    textbuff,
+    applets,
+    sizeof(applets)/sizeof(*applets),
+    scanned_text,
+    66
+  );
   /*
-  compare_keywords(
-  address_to_buff,
-  array,
-  sizeof_array,
-  address_to_result,
-  color_style(A~K)
-  */
-  compare_keywords(
+  return compare_keywords(
     &textbuff[0],
     applets,
     sizeof(applets)/sizeof(*applets),
     &scanned_text[0],
     66
   );
+  */
 }
 
-void bourne_builtins(char *textbuff, char *scanned_text) {
-// const char *bourne_variables[] = { // List of known bourne shell built-in variables...
-//   "~",
-//   "HOME",
-//   "IFS",
-//   "OPTARG",
-//   "OPTIND",
-//   "PATH",
-//   "PS1",
-//   "PS2",
-//   "PWD",
-//   "SHLVL"
-// };
+int bourne_builtins(char *textbuff, char *scanned_text) {
+// compare_keywords(
+// address_to_buff,
+// array,
+// sizeof_array,
+// address_to_result,
+// color_style(A~K)
 
-  // bourne_builtins
-  const char *bourne_function[] = { // List of known bourne shell built-in functions...
-    "alias",
-    "break",
-    "cd",
-    "continue",
-    "eval",
-    "exec",
-    "exit",
-    "export",
-    "getopts",
-    "hash",
-    "pwd",
-    "read",
-    "readonly",
-    "return",
-    "shift",
-    "source",
-    "test",
-    "times",
-    "trap",
-    "umask",
-    "unset"
-  };
-  const char *bourne_constructs[] = { // List of known bourne shell constructs...
-    "case",
-    "do",
-    "done",
-    "elif",
-    "esac",
-    "fi",
-    "for",
-    "if",
-    "in",
-    "select",
-    "then",
-    "until",
-    "while"
-  };
+  int bourne;
+  bourne = compare_keywords(
+    textbuff,
+    bourne_function,
+    sizeof(bourne_function)/sizeof(*bourne_function),
+    scanned_text,
+    68
+  );
+  if (bourne == 0) {
+    bourne = compare_keywords(
+      textbuff,
+      bourne_condition,
+      sizeof(bourne_condition)/sizeof(*bourne_condition),
+      scanned_text,
+      75
+    );
+  }
+  return bourne;
   /*
-  compare_keywords(
-  address_to_buff,
-  array,
-  sizeof_array,
-  address_to_result,
-  color_style(A~K)
-  */
-  compare_keywords(
+  int bourne;
+  bourne = compare_keywords(
     &textbuff[0],
     bourne_function,
     sizeof(bourne_function)/sizeof(*bourne_function),
     &scanned_text[0],
     68
   );
-  compare_keywords(
-    &textbuff[0],
-    bourne_constructs,
-    sizeof(bourne_constructs)/sizeof(*bourne_constructs),
-    &scanned_text[0],
-    75
-  );
+  if (bourne == 0) {
+    bourne = compare_keywords(
+      &textbuff[0],
+      bourne_condition,
+      sizeof(bourne_condition)/sizeof(*bourne_condition),
+      &scanned_text[0],
+      75
+    );
+  }
+  return bourne;
+  */
 }
 
 int is_special(char ascii) {
@@ -669,7 +696,7 @@ void use_coloring() {
     sizeof(styletable) / sizeof(styletable[0]),
     'A',
     style_unfinished_cb,
-    (void*)0
+    0 // void*
   );
   // buff->add_modify_callback(style_update, edit);
   // buff->add_modify_callback(modification_cb, edit);
@@ -691,319 +718,16 @@ void auto_indent_switch() {
   }
 }
 
-void stylebuf_init() {
-  // buff_copy
-  char *buff_copy;
-  buff_copy = buff->text(); // full copy
-  int bufflen;
-  if (buff_copy) {
-    bufflen = strlen(buff_copy); // end_pos + 1
-  } else {
-    fl_alert("buff_copy malloc failed");
-    return;
-  }
-  
-  char *scan;
-  scan = (char*)malloc(bufflen+1);
-  if (scan) {
-    memset(scan, 65, bufflen); // 'A'
-    scan[bufflen] = 0; // '\0'
-  } else {
-    fl_alert("scan malloc failed");
-    free(buff_copy);
-    return;
-  }
-  
-  /*
-  // compare keywords
-  busybox(&buff_copy[0], &scan[0]);
-  bourne_builtins(&buff_copy[0], &scan[0]);
-  */
-  bool cm = false; // #comment 35
-  bool es = false; // \escapes 92
-  bool ds = false; // $dolor_sign 36
-  bool se = false; // ${shell expansion}, ds must be true
-  bool bq = false; // `back quote command substitution` 96
-  bool sq = false; // 'single quote' 39
-  bool dq = false; // "double quote" 34
-  int cs = 0; // $(command substitution)
-  int p = 0; // (parentheses) 40 41
-  // int sb = 0; // [square brackets] 91 93
-  // int cb = 0; // {curly brackets} 123 125
-  // Debug
-  /*
-  fl_alert("buff_copy:%s", buff_copy);
-  fl_alert("scan:%s", scan);
-  */
-  // compare keywords
-  busybox(&buff_copy[0], &scan[0]);
-  bourne_builtins(&buff_copy[0], &scan[0]);
-  // Debug
-  /*
-  fl_alert("After keyword");
-  fl_alert("buff_copy:%s", buff_copy);
-  fl_alert("scan:%s", scan);
-  */
-  int j = 0;
-  
-  for (;j < bufflen; j++) {
-    switch(buff_copy[j]) {
-      case 10: // newline
-        if (cm) cm = !cm;
-      case 9: // tab
-      case 32: // space
-        if (ds) ds = !ds;
-        scan[j] = buff_copy[j];
-        continue;
-      case 35: // #comment
-        if (!ds && !sq && !dq && !se) {
-          cm = true;
-          scan[j] = 'J';
-        }
-        break;
-      case 92: // \escapes
-        if (!cm && !sq) es = true;
-        break; // other escape
-      case 39: // 'single quote'
-        if (cm) break;
-        // single quote is always
-        // treated literally in double quote
-        if (!dq) {
-          sq = !sq;
-          scan[j] = 'F';
-          continue;
-        }
-        break;
-      case 34: // "double quote"
-        if (cm) break;
-        if (!sq) {
-          dq = !dq;
-          scan[j] = 'G';
-          if (ds) ds = !ds;
-          continue;
-        }
-        break;
-      case 96: // `back quote`
-        if (cm || sq) break;
-        scan[j] = 'E';
-        ds = false;
-        bq = !bq;
-        break;
-      case 36: // $dolor_sign
-        if (cm || sq) break;
-        ds = true;
-        switch(buff_copy[j+1]) {
-          case 33: // built-in variable $!
-          case 35: // built-in variable $#
-          case 36: // built-in variable $$
-          case 42: // built-in variable $*
-          case 45: // built-in variable $-
-          case 63: // built-in variable $?
-          case 64: // built-in variable $@
-          case 95: // built-in variable $_
-            scan[j] = 'I';
-            j++;
-            scan[j] = 'I';
-            ds = false;
-            continue;
-          case 40: // $(...
-            cs++;
-            p++;
-            scan[j] = 'E';
-            j++;
-            scan[j] = 'E';
-            ds = false;
-            continue;
-          case 123: // shell expansion ${
-            // cb++;
-            se = true; // a bit redundant
-            scan[j] = 'I';
-            j++;
-            scan[j] = 'I';
-            ds = true;
-            continue;
-          case 9: // tab
-          case 10: // newline
-          case 32: // space
-          case 47: // regular expression /$/
-            // trailing dolor_sign$
-            ds = false;
-            // resume default
-            scan[j] = 'A';
-            continue;
-        }
-        scan[j] = 'I';
-        if (is_special(buff_copy[j+1])) {
-          // invalid variable $, or such
-          // resume default
-          ds = false;
-          scan[j] = 'A';
-        }
-        break;
-      case 40: // (
-        if (cm || sq || dq) break;
-        p++;
-        scan[j] = 'C';
-        break;
-      case 41: // )
-        if (cm || sq) break;
-        if (ds) ds = !ds;
-        if (dq) {
-          if (cs == 0)
-          break;
-        }
-        p--;
-        scan[j] = 'C';
-        break;
-      case 123: // {
-        scan[j] = 'C';
-        break;
-      case 125: // }
-        if (cm || sq) break;
-        if (ds || se) {
-          // end of variable
-          ds = false;
-          se = false;
-          scan[j] = 'I';
-          continue;
-        }
-        scan[j] = 'C';
-        break;
-      default:
-        if (cm || es || sq) break;
-        // scan[j] = 'A'; --> overwrite the keywords
-        if (is_special(buff_copy[j])) scan[j] = 'C';
-    }
-    if (se) {
-      scan[j] = 'I';
-      continue;
-    }
-    if (cm) {
-      switch (buff_copy[j]) {
-        case 10: // newline
-          cm = false;
-        case 9: // tab
-        case 32: // space
-          scan[j] = buff_copy[j];
-          break;
-        default:
-          scan[j] = 'J';
-      }
-      continue;
-    }
-    if (sq) {
-      // 'single quote' ignore escapes
-      scan[j] = 'F';
-      if (buff_copy[j] == 39) sq = !sq;
-      continue;
-    }
-    if (dq) scan[j] = 'G';
-    if (ds) {
-      scan[j] = 'I';
-      if (is_special(buff_copy[j+1])) {
-        // end of variable
-        ds = false;
-        continue;
-      }
-    }
-    if (es) {
-      // this char = backslash (92)
-      if (buff_copy[j+1]) {
-        // char not null
-        scan[j] = 'H';
-        scan[j+1] = 'H';
-      }
-      if (dq && buff_copy[j+1] == 39) {
-        // echo "\'" --> \'
-        es = false;
-        continue;
-      }
-      if (buff_copy[j+1] == 120) {
-        // hex \xFF 48~57, 65~70, 97~102
-        bool hex = ((
-          (buff_copy[j+2] > 47 && buff_copy[j+2] < 58) ||
-          (buff_copy[j+2] > 64 && buff_copy[j+2] < 71) ||
-          (buff_copy[j+2] > 96 && buff_copy[j+2] < 103)
-        ) && (
-          (buff_copy[j+3] > 47 && buff_copy[j+3] < 58) ||
-          (buff_copy[j+3] > 64 && buff_copy[j+3] < 71) ||
-          (buff_copy[j+3] > 96 && buff_copy[j+3] < 103)
-        ));
-        if (hex) {
-          scan[j+2] = 'H';
-          scan[j+3] = 'H';
-          j+=2;
-        }
-      }
-      j++;
-      es = false;
-      continue;
-    }
-    if (cs>0) {
-      if (scan[j] == 'A') scan[j] = 'E';
-      if (buff_copy[j] == 41) {
-        // )
-        scan[j] = 'E';
-        cs--;
-        if (p > cs) cs++;
-      }
-      // continue;
-    }
-    if (bq) {
-      if (scan[j] == 'A') scan[j] = 'E';
-      // continue;
-    }
-  }
-  /*
-  fl_alert("Before init");
-  fl_alert("buff_copy:%s", buff_copy);
-  fl_alert("scan:%s", scan);
-  */
-  stylebuf->text(scan);
-  /*
-  fl_alert("Write to buff");
-  fl_alert("%s", stylebuf->text());
-  */
-  free(buff_copy);
-  free(scan);
-// KeyWord Debug
-// for (;j < bufflen; j++) {
-//   switch(buff_copy[j]) {
-//     case 10: // newline
-//       if (cm) cm = !cm;
-//     case 9: // tab
-//     case 32: // space
-//       if (ds) ds = !ds;
-//       scan[j] = buff_copy[j];
-//   }
-// }
-
-}
-
-void color_cb() {
-  color = !color;
-  if (color) {
-    stylebuf_init();
-    // scan_forward(0);
-    // use_coloring();
-    color_switch->label("NoColor");
-  } else {
-    disable_color();
-    color_switch->label("Colorful");
-    // edit->redisplay_range(0, buff->length());
-  }
-  edit->redisplay_range(0, buff->length());
-}
-
-int auto_indent_cb(int lsp, int pos, char *line) {
+void auto_indent_cb(int lsp, int pos, char *line) {
 // lsp: line start pos
 // pos: insert position
 // line: entire line
 
-  int current_pos = pos + 1; // '\n'
-  char *indention; // '\n'space'\0'
-  indention = new char[current_pos - lsp]; // [pos - lsp + 1]
-  int ai = 0;
+  size_t current_pos = pos + 1; // '\n'
+  // '\n'indent_space'\0'
+  char *indention = (char *)malloc(current_pos - lsp); // pos - lsp + 1
+  
+  size_t ai = 0;
   for (;ai < (current_pos - lsp);ai++) {
     // tab || space
     if (line[ai] == 9 || line[ai] == 32) indention[ai] = line[ai];
@@ -1015,9 +739,10 @@ int auto_indent_cb(int lsp, int pos, char *line) {
       indention[0] = 0; // '\0'
       stylebuf->replace(current_pos, current_pos, indention);
     }
-    delete[] indention;
+    free(indention);
     free(line);
-    return current_pos;
+    edit->insert_position(current_pos - 1);
+    return;
   }
   indention[ai] = 0; // '\0'
   buff->insert(current_pos, indention); // will call modification_cb
@@ -1027,396 +752,610 @@ int auto_indent_cb(int lsp, int pos, char *line) {
     // modification_cb already handle the inserted '\n', using "replace"
     stylebuf->replace(pos + 1, current_pos, indention);
   }
-  delete[] indention;
+  free(indention);
   free(line);
-  return current_pos - 1;
+  edit->insert_position(current_pos - 1);
 }
 
-void compare_keywords(char *text, const char *keys[], int elements, char *result, int ascii) {
-// old code called after style
-// int needle_len = strlen(needle);
-// bool bos = true; // begin of string
-// while (1) {
-  // match first char
-//   while(*text != *needle) {
-//     bos = false;
-//     *text++;
-//     *result++;
-//     if (*text == 0) {
-      // end of string
-//       return;
-//     }
-//   }
-//   if (*result == 70 || *result == 71 || *result == 74) {
-    // F - Single Quotes
-    // G - Double Quotes
-    // J - comments
-//     bos = false;
-//     *text++;
-//     *result++;
-//     continue;
-//   }
-//   int nl = 1; // needle[0] already matched
-//   for (; nl < needle_len; nl++) {
-//     if (text[nl] != needle[nl]) {
-//       bos = false;
-//       *(text += nl);
-//       *(result += nl);
-//       break;
-//     }
-//   }
-  // all matched
-//   if (nl == needle_len) {
-    // check anterior
-//     if (!bos) {
-      // skip begin of string
-//       switch (*(text - 1)) {
-//         case 9: // tab
-//         case 32: // space
-//         case 38: // &
-//         case 40: // (
-//         case 59: // ;
-//         case 60: // <
-//         case 62: // >
-//         case 96: // `
-//         case 124: // |
-//           break;
-//         default:
-//           *(text += nl);
-//           *(result += nl);
-//           continue;
-//       }
-//     }
-    // check posterior
-//     switch (text[nl]) {
-//       case 0: // end of string
-//       case 9: // tab
-//       case 10: // newline
-//       case 32: // space
-//       case 38: // &
-//       case 41: // )
-//       case 59: // ;
-//       case 60: // <
-//       case 62: // >
-//       case 96: // `
-//       case 124: // |
-//         break;
-//       default:
-//         bos = false;
-//         *(text += nl);
-//         *(result += nl);
-//         continue;
-//     }
-//     for (; nl > 0; nl--) {
-//       *result = ascii;
-//       *text++;
-//       *result++;
-//     }
-//   }
-// }
-// old code V2
-// const char *needle;
-// bool matched = true;
-// size_t nl = 0;
-// size_t textlen = strlen(text);
-// matching leading char
-// size_t i = 0;
-// for (; i < elements; i++) {
-//   needle = keys[i];
-//   nl = strlen(needle);
-//   if (textlen < nl) {
-    // next keyword
-//     continue;
-//   }
-  // matching first char
-//   if (*text == *needle) {
-    // check posterior
-//     switch (text[nl]) {
-//       case 0: // end of string
-//       case 9: // tab
-//       case 10: // newline
-//       case 32: // space
-//       case 38: // &
-//       case 41: // )
-//       case 59: // ;
-//       case 60: // <
-//       case 62: // >
-//       case 96: // `
-//       case 124: // |
-//         break;
-//       default:
-        // next keyword
-//         continue;
-//     }
-    // string length matched
-//     size_t j = 1; // first char already matched
-//     for (; j < nl; j++) {
-      // matching
-//       if (text[j] != needle[j]) {
-        // next element
-//         matched = false;
-//         break;
-//       }
-//     }
-//     if (matched) {
-//       for (; nl > 0; nl--) {
-//         *result = ascii;
-//         textlen--;
-//         result++;
-//         text++;
-//       }
-      // breaking element loop
-//       break;
-//     }
-    // else: stay at current text pos
-//   }
-// }
-// do {
-  // check anterior
-//   switch (*text) {
-//     case 9: // tab
-//     case 10: // newline
-//     case 32: // space
-//     case 38: // &
-//     case 40: // (
-//     case 59: // ;
-//     case 60: // <
-//     case 62: // >
-//     case 96: // `
-//     case 124: // |
-      // if next char is A-Z/a-z
-//       if (text[1] > 96 && text[1] < 123) {
-        // all keywords are in lowercase
-//         textlen--;
-//         result++;
-//         text++;
-//         break;
-//       }
-//     default:
-//       textlen--;
-//       result++;
-      // *text++ by while
-//       continue;
-//   }
-//   size_t k = 0;
-//   for (; k < elements; k++) {
-//     needle = keys[k];
-//     nl = strlen(needle);
-//     if (textlen < nl) {
-      // next keyword
-//       continue;
-//     }
-    // matching first char
-//     if (*text == *needle) {
-      // check posterior
-//       switch (text[nl]) {
-//         case 0: // end of string
-//         case 9: // tab
-//         case 10: // newline
-//         case 32: // space
-//         case 38: // &
-//         case 41: // )
-//         case 59: // ;
-//         case 60: // <
-//         case 62: // >
-//         case 96: // `
-//         case 124: // |
-//           break;
-//         default:
-          // next keyword
-//           continue;
-//       }
-//       matched = true;
-      // string length matched
-//       size_t l = 1; // first char already matched
-//       for (; l < nl; l++) {
-        // matching
-//         if (text[l] != needle[l]) {
-          // next element
-//           matched = false;
-//           break;
-//         }
-//       }
-//       if (matched) {
-//         for (; nl > 0; nl--) {
-//           *result = ascii;
-//           textlen--;
-//           result++;
-//           text++;
-//         }
-        // stay at current text pos
-//         textlen++;
-//         result--;
-//         text--;
-        // breaking element loop
-//         break;
-//       }
-      // else: stay at current text pos
-//     }
-//   }
-//   textlen--;
-//   result++;
-  // *text++ by while
-// } while (*text++);
+void stylebuf_init() {
+  // VARS init
+  VARS.pssp = 0;
+  VARS.cm = false;
+  VARS.es = false;
+  VARS.ds = false;
+  VARS.se = false;
+  VARS.bq = false;
+  VARS.sq = false;
+  VARS.dq = false;
+  VARS.pssp = 0;
+  VARS.cs = 0;
+  VARS.p = 0;
+  // buff_copy
+  int bufflen;
+  char *buff_copy;
+  buff_copy = buff->text(); // full copy
+  if (buff_copy) {
+    bufflen = strlen(buff_copy); // end_pos + 1
+  } else {
+    fl_alert("*** Error, malloc failed ***\nDisabling the coloring!");
+    color_cb();
+    return;
+  }
+  scan_forward(buff_copy, bufflen, 0);
+  free(buff_copy);
+  return;
+}
+
+void color_cb() {
+  color = !color;
+  if (color) {
+    stylebuf_init();
+    color_switch->label("NoColor");
+  } else {
+    disable_color();
+    color_switch->label("Colorful");
+  }
+  edit->redisplay_range(0, buff->length());
+}
+
+int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii) {
   const char *needle;
-  bool matched = false;
-  int loop_nb = 0;
-  /*
   size_t nl; // needle length
-  size_t textlen = strlen(text);
-  size_t k;
-  size_t l;
-  */
-  int nl; // needle length
-  int textlen = strlen(text);
-  int k;
-  int l;
-  
-  do {
-    // check anterior, skip first char
-    if (loop_nb) {
-      switch (*text) {
+  size_t k = 0;
+  size_t mp; // matching point
+  for (; k < elements; k++) {
+    needle = keys[k];
+    nl = strlen(needle);
+    // matching first char
+    if (*text == *needle) {
+      // check posterior
+      switch (text[nl]) {
+        case 0: // end of string
         case 9: // tab
         case 10: // newline
         case 32: // space
         case 38: // &
-        case 40: // (
+        case 41: // )
         case 59: // ;
         case 60: // <
         case 62: // >
         case 96: // `
         case 124: // |
-          // if next char is A-Z/a-z
-          if (text[1] > 96 && text[1] < 123) {
-            // all keywords are in lowercase
-            textlen--;
-            result++;
-            text++;
-            break;
-          }
+          break;
         default:
-          textlen--;
-          result++;
-          // *text++ by while
+          // next keyword
           continue;
       }
-    }
-    loop_nb++;
-    for (k = 0; k < elements; k++) {
-      needle = keys[k];
-      nl = strlen(needle);
-      if (textlen < nl) {
-        // next keyword
-        continue;
+      for (mp = 1; mp < nl; mp++) {
+        // matching
+        if (text[mp] != needle[mp]) {
+          // next element
+          break;
+        }
       }
-      // matching first char
-      if (*text == *needle) {
-        // check posterior
-        switch (text[nl]) {
-          case 0: // end of string
+      if (mp == nl) {
+        // matched
+        break;
+      }
+    } else {
+      continue;
+    }
+  }
+  if (k != elements) {
+    while (*needle++) {
+      *result = ascii;
+      result++;
+    }
+    return nl - 1;
+  }
+  return 0;
+}
+
+void setvars(char *buff_copy, int pos) {
+  // VARS init
+  VARS.cm = false;
+  VARS.es = false;
+  VARS.ds = false;
+  VARS.se = false;
+  VARS.bq = false;
+  VARS.sq = false;
+  VARS.dq = false;
+  VARS.cs = 0;
+  VARS.p = 0;
+  int setvar = 0;
+  
+  // [[fallthrough]]; --> suppress the fallthrough warning
+  
+  for (;setvar < pos; setvar++) {
+    switch(buff_copy[setvar]) {
+      case 10: // newline
+        if (VARS.cm) VARS.cm = !VARS.cm;
+        [[fallthrough]];
+      case 9: // tab
+        [[fallthrough]];
+      case 32: // space
+        if (VARS.ds) VARS.ds = !VARS.ds;
+        continue;
+      case 34: // "double quote"
+        if (VARS.cm) break;
+        if (!VARS.sq) {
+          VARS.dq = !VARS.dq;
+          if (VARS.ds) VARS.ds = !VARS.ds;
+          continue;
+        }
+        break;
+      case 35: // #comment
+        if (!VARS.ds && !VARS.sq && !VARS.dq && !VARS.se) {
+          VARS.cm = true;
+        }
+        break;
+      case 36: // $dolor_sign
+        if (VARS.cm || VARS.sq) break;
+        VARS.ds = true;
+        switch(buff_copy[setvar+1]) {
+          case 33: // built-in variable $!
+          case 35: // built-in variable $#
+          case 36: // built-in variable $$
+          case 42: // built-in variable $*
+          case 45: // built-in variable $-
+          case 63: // built-in variable $?
+          case 64: // built-in variable $@
+          case 95: // built-in variable $_
+            setvar++;
+            VARS.ds = false;
+            continue;
+          case 40: // $(...
+            VARS.cs++;
+            VARS.p++;
+            setvar++;
+            VARS.ds = false;
+            continue;
+          case 123: // shell expansion ${
+            // cb++;
+            VARS.se = true; // a bit redundant
+            setvar++;
+            VARS.ds = true;
+            continue;
+          case 0: // '\0'
           case 9: // tab
           case 10: // newline
           case 32: // space
-          case 38: // &
-          case 41: // )
-          case 59: // ;
-          case 60: // <
-          case 62: // >
-          case 96: // `
-          case 124: // |
-            break;
-          default:
-            // next keyword
+          case 47: // regular expression /$/
+            // trailing dolor_sign$
+            VARS.ds = false;
+            // resume default
             continue;
         }
-        matched = true;
-        // string length matched
-        // l = 1 --> first char already matched
-        for (l = 1; l < nl; l++) {
-          // matching
-          if (text[l] != needle[l]) {
-            // next element
-            matched = false;
-            break;
-          }
+        if (is_special(buff_copy[setvar+1])) {
+          // invalid variable $, or such
+          // resume default
+          VARS.ds = false;
         }
-        if (matched) {
-          for (; nl > 0; nl--) {
-            *result = ascii;
-            textlen--;
-            result++;
-            text++;
-          }
-          // stay at current text pos
-          textlen++;
-          result--;
-          text--;
-          // breaking element loop
-          break;
+        break;
+      case 39: // 'single quote'
+        if (VARS.cm) break;
+        // single quote is always
+        // treated literally in double quote
+        if (!VARS.dq) {
+          VARS.sq = !VARS.sq;
+          continue;
         }
-        // else: stay at current text pos
+        break;
+      case 40: // (
+        if (VARS.cm || VARS.sq || VARS.dq) break;
+        VARS.p++;
+        break;
+      case 41: // )
+        if (VARS.cm || VARS.sq) break;
+        if (VARS.ds) VARS.ds = !VARS.ds;
+        if (VARS.dq && VARS.cs == 0) break;
+        VARS.p--;
+        break;
+      case 92: // \escapes
+        if (!VARS.cm && !VARS.sq) VARS.es = true;
+        break; // other escape
+      case 96: // `back quote`
+        if (VARS.cm || VARS.sq) break;
+        VARS.ds = false;
+        VARS.bq = !VARS.bq;
+        continue;
+      case 125: // }
+        if (VARS.cm || VARS.sq) break;
+        if (VARS.ds || VARS.se) {
+          // end of variable
+          VARS.ds = false;
+          VARS.se = false;
+          continue;
+        }
+        break;
+    }
+    if (VARS.se) continue;
+    if (VARS.cm) {
+      if (buff_copy[setvar] == 10) VARS.cm = false;
+      continue;
+    }
+    if (VARS.sq) {
+      // 'single quote' ignore escapes
+      if (buff_copy[setvar] == 39) VARS.sq = !VARS.sq;
+      continue;
+    }
+    if (VARS.ds) {
+      if (is_special(buff_copy[setvar+1]) || buff_copy[setvar+1] == 0) {
+        // end of variable
+        VARS.ds = false;
+        continue;
       }
     }
-    textlen--;
-    result++;
-    // *text++ by while
-  } while (*text++);
+    if (VARS.es) {
+      // this char = backslash (92)
+      if (VARS.dq && buff_copy[setvar+1] == 39) {
+        // echo "\'" --> \'
+        VARS.es = false;
+        continue;
+      }
+      if (buff_copy[setvar+1] == 120) {
+        // hex \xFF 48~57, 65~70, 97~102
+        bool hex = ((
+          (buff_copy[setvar+2] > 47 && buff_copy[setvar+2] < 58) ||
+          (buff_copy[setvar+2] > 64 && buff_copy[setvar+2] < 71) ||
+          (buff_copy[setvar+2] > 96 && buff_copy[setvar+2] < 103)
+        ) && (
+          (buff_copy[setvar+3] > 47 && buff_copy[setvar+3] < 58) ||
+          (buff_copy[setvar+3] > 64 && buff_copy[setvar+3] < 71) ||
+          (buff_copy[setvar+3] > 96 && buff_copy[setvar+3] < 103)
+        ));
+        if (hex) setvar+=2;
+      }
+      setvar++;
+      VARS.es = false;
+      continue;
+    }
+    if (VARS.cs > 0) {
+      if (buff_copy[setvar] == 41) {
+        // )
+        VARS.cs--;
+        if (VARS.p > VARS.cs) VARS.cs++;
+      }
+      // continue;
+    }
+  }
+}
+
+int scan_forward(char *buff_copy, int bufflen, int pos) {
+  char *scan;
+  scan = (char*)malloc(bufflen - pos + 1);
+  if (scan) {
+    memset(scan, 65, bufflen - pos); // 'A'
+    scan[bufflen - pos] = 0; // '\0'
+  } else {
+    fl_alert("*** Error, malloc failed ***\nDisabling the coloring!");
+    color_cb();
+    return 1;
+  }
+  struct syntax UPDATE;
+  // duplicate the struct to preserve VARS values
+  UPDATE = VARS;
+  int j = 0;
+  int m = 0;
+  bool key = true;
+  
+  // [[fallthrough]]; --> suppress the fallthrough warning
+  
+  for (;j < bufflen - pos; j++) {
+    switch(buff_copy[j+pos]) {
+      case 10: // newline
+        if (UPDATE.cm) UPDATE.cm = !UPDATE.cm;
+        [[fallthrough]];
+      case 9: // tab
+        [[fallthrough]];
+      case 32: // space
+        key = true;
+        if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+        scan[j] = buff_copy[j+pos];
+        continue;
+      case 34: // "double quote"
+        if (UPDATE.cm) break;
+        if (!UPDATE.sq) {
+          UPDATE.dq = !UPDATE.dq;
+          scan[j] = 'G';
+          if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+          continue;
+        }
+        break;
+      case 35: // #comment
+        key = false;
+        if (!UPDATE.ds && !UPDATE.sq && !UPDATE.dq && !UPDATE.se) {
+          UPDATE.cm = true;
+          scan[j] = 'J';
+        }
+        break;
+      case 36: // $dolor_sign
+        key = false;
+        if (UPDATE.cm || UPDATE.sq) break;
+        UPDATE.ds = true;
+        switch(buff_copy[j+pos+1]) {
+          case 33: // built-in variable $!
+          case 35: // built-in variable $#
+          case 36: // built-in variable $$
+          case 42: // built-in variable $*
+          case 45: // built-in variable $-
+          case 63: // built-in variable $?
+          case 64: // built-in variable $@
+          case 95: // built-in variable $_
+            scan[j] = 'I';
+            j++;
+            scan[j] = 'I';
+            UPDATE.ds = false;
+            continue;
+          case 40: // $(...
+            UPDATE.cs++;
+            UPDATE.p++;
+            scan[j] = 'E';
+            j++;
+            scan[j] = 'E';
+            key = true;
+            UPDATE.ds = false;
+            continue;
+          case 123: // shell expansion ${
+            // cb++;
+            UPDATE.se = true; // a bit redundant
+            scan[j] = 'I';
+            j++;
+            scan[j] = 'I';
+            UPDATE.ds = true;
+            continue;
+          case 0: // '\0'
+          case 9: // tab
+          case 10: // newline
+          case 32: // space
+          case 47: // regular expression /$/
+            // trailing dolor_sign$
+            UPDATE.ds = false;
+            // resume default
+            scan[j] = 'A';
+            continue;
+        }
+        scan[j] = 'I';
+        if (is_special(buff_copy[j+pos+1])) {
+          // invalid variable $, or such
+          // resume default
+          UPDATE.ds = false;
+          scan[j] = 'A';
+        }
+        break;
+      case 39: // 'single quote'
+        key = false;
+        if (UPDATE.cm) break;
+        // single quote is always
+        // treated literally in double quote
+        if (!UPDATE.dq) {
+          UPDATE.sq = !UPDATE.sq;
+          scan[j] = 'F';
+          continue;
+        }
+        break;
+      case 40: // (
+        key = true;
+        if (UPDATE.cm || UPDATE.sq || UPDATE.dq) break;
+        UPDATE.p++;
+        scan[j] = 'C';
+        break;
+      case 41: // )
+        key = false;
+        if (UPDATE.cm || UPDATE.sq) break;
+        if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+        if (UPDATE.dq) {
+          if (UPDATE.cs == 0)
+          break;
+        }
+        UPDATE.p--;
+        scan[j] = 'C';
+        break;
+      case 92: // \escapes
+        key = false;
+        if (!UPDATE.cm && !UPDATE.sq) UPDATE.es = true;
+        break; // other escape
+      case 96: // `back quote`
+        key = true;
+        if (UPDATE.cm || UPDATE.sq) break;
+        scan[j] = 'E';
+        UPDATE.ds = false;
+        UPDATE.bq = !UPDATE.bq;
+        continue;
+      case 123: // {
+        scan[j] = 'C';
+        break;
+      case 125: // }
+        if (UPDATE.cm || UPDATE.sq) break;
+        if (UPDATE.ds || UPDATE.se) {
+          // end of variable
+          UPDATE.ds = false;
+          UPDATE.se = false;
+          scan[j] = 'I';
+          continue;
+        }
+        scan[j] = 'C';
+        break;
+      case 38: // &
+      case 59: // ;
+      case 60: // <
+      case 62: // >
+      case 124: // >
+        // 38, 59, 60, 62, 124 fall through to default
+        key = true;
+        [[fallthrough]];
+      default:
+        if (UPDATE.cm || UPDATE.es || UPDATE.sq) break;
+        // scan[j] = 'A'; --> overwrite the keywords
+        if (is_special(buff_copy[j+pos])) scan[j] = 'C';
+    }
+    if (UPDATE.se) {
+      scan[j] = 'I';
+      continue;
+    }
+    if (UPDATE.cm) {
+      switch (buff_copy[j+pos]) {
+        case 10: // newline
+          UPDATE.cm = false;
+          [[fallthrough]];
+        case 9: // tab
+        case 32: // space
+          scan[j] = buff_copy[j+pos];
+          break;
+        default:
+          scan[j] = 'J';
+      }
+      continue;
+    }
+    if (UPDATE.sq) {
+      // 'single quote' ignore escapes
+      scan[j] = 'F';
+      if (buff_copy[j+pos] == 39) UPDATE.sq = !UPDATE.sq;
+      continue;
+    }
+    if (UPDATE.dq) scan[j] = 'G';
+    if (UPDATE.ds) {
+      scan[j] = 'I';
+      if (is_special(buff_copy[j+pos+1]) || buff_copy[j+pos+1] == 0) {
+        // end of variable
+        UPDATE.ds = false;
+        continue;
+      }
+    }
+    if (UPDATE.es) {
+      // this char = backslash (92)
+      if (buff_copy[j+pos+1]) {
+        // char not null
+        scan[j] = 'H';
+        scan[j+1] = 'H';
+      }
+      if (UPDATE.dq && buff_copy[j+pos+1] == 39) {
+        // echo "\'" --> \'
+        UPDATE.es = false;
+        continue;
+      }
+      if (buff_copy[j+pos+1] == 120) {
+        // hex \xFF 48~57, 65~70, 97~102
+        bool hex = ((
+          (buff_copy[j+pos+2] > 47 && buff_copy[j+pos+2] < 58) ||
+          (buff_copy[j+pos+2] > 64 && buff_copy[j+pos+2] < 71) ||
+          (buff_copy[j+pos+2] > 96 && buff_copy[j+pos+2] < 103)
+        ) && (
+          (buff_copy[j+pos+3] > 47 && buff_copy[j+pos+3] < 58) ||
+          (buff_copy[j+pos+3] > 64 && buff_copy[j+pos+3] < 71) ||
+          (buff_copy[j+pos+3] > 96 && buff_copy[j+pos+3] < 103)
+        ));
+        if (hex) {
+          scan[j+2] = 'H';
+          scan[j+3] = 'H';
+          j+=2;
+        }
+      }
+      j++;
+      UPDATE.es = false;
+      continue;
+    }
+    if (UPDATE.cs > 0) {
+      if (scan[j] == 'A') scan[j] = 'E';
+      if (buff_copy[j+pos] == 41) {
+        // )
+        scan[j] = 'E';
+        UPDATE.cs--;
+        if (UPDATE.p > UPDATE.cs) UPDATE.cs++;
+      }
+      // continue;
+    }
+    if (UPDATE.bq) {
+      if (scan[j] == 'A') scan[j] = 'E';
+      // continue;
+    }
+    if (key) {
+      // scan for keywords
+      key = false;
+      if (UPDATE.dq) {
+        if (UPDATE.cs == 0 && !UPDATE.bq)
+        continue;
+      }
+      m = bourne_builtins(&buff_copy[j+pos], &scan[j]);
+      if (m == 0) m = busybox(&buff_copy[j+pos], &scan[j]);
+      j += m;
+    }
+  }
+  stylebuf->replace(pos, stylebuf->length(), scan);
+  /*
+  example:
+  {'s', 't', 'r', 'i', 'n', 'g'}
+  replace(1, 3, "ABC")
+  {'s', 'A', 'B', 'C', 'i', 'n', 'g'}
+  */
+  edit->redisplay_range(pos, buff->length());
+  free(scan);
+  return 0;
 }
 
 void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg) {
-  if (nInserted == 0 && nDeleted == 0) {
-    // selection change
-    stylebuf->unselect();
-    return;
+  if (!changed) {
+    if (nInserted != 0 || nDeleted != 0) {
+      // adjust title
+      changed = true;
+      strcat(title, "*");
+      win->label(title);
+    }
   }
   if (nInserted > 0 && nDeleted > 0) {
     // This only happens when a user undo changes
     // do nothing...
     return;
   }
-  if (!changed) {
-    // adjust title
-    changed = true;
-    strcat(title, "*");
-    win->label(title);
-  }
-  // different from pos, a current working pos
-  int current_pos = pos;
   if (auto_indent && nInserted == 1 && buff->char_at(pos) == 10) {
     indenting = true;
-    current_pos = auto_indent_cb(
+    auto_indent_cb(
       buff->line_start(pos),
       pos, // insert position
       buff->line_text(pos)
     );
-    edit->insert_position(current_pos);
+    return;
+  }
+  // int scan_pos
+  int scan_pos;
+  // scan from the start of the line to check for key words
+  scan_pos = buff->line_start(pos);
+  // buff_copy
+  int bufflen;
+  char *buff_copy;
+  buff_copy = buff->text(); // full copy
+  if (buff_copy) {
+    bufflen = strlen(buff_copy); // end_pos + 1
+  } else {
+    fl_alert("*** Error, malloc failed ***\nDisabling the coloring!");
+    color_cb();
+    return;
+  }
+  if (nInserted == 0 && nDeleted == 0) {
+    if (color) {
+      setvars(buff_copy, scan_pos);
+    }
+    // selection change
+    stylebuf->unselect();
+    free(buff_copy);
     return;
   }
   if (color) {
-    // Debug
-    /*
-    fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
-    pos, nInserted, nDeleted, nRestyled, deletedText);
-    fl_alert("current buffer: '%c'\ncurrent style: '%c' \ncurrent_pos: '%d'",
-    buff->char_at(pos), stylebuf->char_at(pos), current_pos);
-    */
-    int scan_pos; // line_start_pos
-    if (buff->char_at(pos) == 10) {
-      scan_pos = pos + 1;
-    } else {
-      scan_pos = buff->line_start(pos);
-    }
     if (indenting) {
       indenting = false;
       scan_pos = buff->line_start(scan_pos - 2);
     }
-    // I'm lazy
-    stylebuf_init();
-    edit->redisplay_range(0, buff->length());
-    // edit->redisplay_range(current_pos, buff->length());
-    edit->insert_position(current_pos);
-    edit->show_insert_position();
-    return;
+    if (VARS.pssp != scan_pos || indenting) {
+      setvars(buff_copy, scan_pos);
+    }
+    // fl_alert("%d\n", scan_pos);
+    int result = scan_forward(buff_copy, bufflen, scan_pos);
+    free(buff_copy);
+    if (result) {
+      // error occur, malloc failed
+      return;
+    }
+    VARS.pssp = scan_pos;
 // catch exception
     if (buff->length() != stylebuf->length()) {
       fl_alert(
@@ -1431,8 +1370,10 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
       // Debug
       fl_alert("pos:%d\nnInserted:%d\nnDeleted:%d\nnRestyled:%d\ndeletedText:\n%s",
       pos, nInserted, nDeleted, nRestyled, deletedText);
-      fl_alert("current buffer: '%c'\ncurrent style: '%c' \ncurrent_pos: '%d'",
-      buff->char_at(pos), stylebuf->char_at(pos), current_pos);
+      fl_alert("current buffer: '%c'\ncurrent style: '%c'",
+      buff->char_at(pos), stylebuf->char_at(pos));
+      fl_alert("current buffer: '%d'\ncurrent style: '%d'",
+      buff->char_at(pos), stylebuf->char_at(pos));
     }
   }
 }
@@ -1449,6 +1390,227 @@ void ts_cb() {
 void ss_cb() {
   fl_alert("%d", stylebuf->length());
   fl_alert("%s", stylebuf->text());
+}
+
+int arg_parser(int argc, char **argv, int &i) {
+  return 0;
+// http://www.fltk.org/articles.php?L744
+}
+char search_string[2048]; 
+char replace_string[2048]; 
+
+void find_dialog() {
+  const char *SS = fl_input("Search String:", search_string);
+  // Search string is blank
+  if (SS == NULL || *SS == 0) return;
+  int sf_pos;
+  int sf_r = buff->search_forward(
+    edit->insert_position(),
+    SS,
+    &sf_pos,
+    0
+  );
+  if (sf_r) {
+    buff->select(sf_pos, sf_pos + strlen(SS));
+    edit->insert_position(sf_pos + 1);
+    edit->show_insert_position();
+  } else {
+    fl_alert("No occurrences of \'%s\' found!", SS);
+  }
+  strcpy(search_string, SS);
+}
+
+void find_again_dialog() {
+  if (*search_string == 0) {
+    // Search string is blank
+    find_dialog();
+    return;
+  }
+  int sf_pos;
+  int sf_r = buff->search_forward(
+    edit->insert_position(),
+    search_string,
+    &sf_pos,
+    0
+  );
+  if (sf_r) {
+    buff->select(sf_pos, sf_pos + strlen(search_string));
+    edit->insert_position(sf_pos + 1);
+    edit->show_insert_position();
+  } else {
+    fl_alert("No occurrences of \'%s\' found!", search_string);
+  }
+}
+
+Fl_Double_Window *replace_dialog_window=(Fl_Double_Window *)0;
+
+Fl_Input *text_in_find=(Fl_Input *)0;
+
+Fl_Input *text_in_replace=(Fl_Input *)0;
+
+Fl_Button *replace_all_btn=(Fl_Button *)0;
+
+static void cb_replace_all_btn(Fl_Button*, void*) {
+  replace_all_cb();
+}
+
+Fl_Return_Button *replace_next_btn=(Fl_Return_Button *)0;
+
+static void cb_replace_next_btn(Fl_Return_Button*, void*) {
+  replace_next_cb();
+}
+
+Fl_Button *RD_cancel_btn=(Fl_Button *)0;
+
+static void cb_RD_cancel_btn(Fl_Button*, void*) {
+  close_dialog(replace_dialog_window, 0);
+}
+
+Fl_Double_Window* replace_dialog() {
+  { replace_dialog_window = new Fl_Double_Window(320, 155, "Replace");
+    { text_in_find = new Fl_Input(72, 20, 230, 30, "Find:");
+    } // Fl_Input* text_in_find
+    { text_in_replace = new Fl_Input(72, 60, 230, 30, "Replace:");
+    } // Fl_Input* text_in_replace
+    { replace_all_btn = new Fl_Button(15, 110, 85, 30, "Replace All");
+      replace_all_btn->callback((Fl_Callback*)cb_replace_all_btn);
+    } // Fl_Button* replace_all_btn
+    { replace_next_btn = new Fl_Return_Button(105, 110, 130, 30, "Replace Next");
+      replace_next_btn->callback((Fl_Callback*)cb_replace_next_btn);
+    } // Fl_Return_Button* replace_next_btn
+    { RD_cancel_btn = new Fl_Button(240, 110, 64, 30, "Cancel");
+      RD_cancel_btn->callback((Fl_Callback*)cb_RD_cancel_btn);
+    } // Fl_Button* RD_cancel_btn
+    replace_dialog_window->end();
+  } // Fl_Double_Window* replace_dialog_window
+  /*
+  replace_dialog_window->show();
+  const char *find = text_in_find->value();
+  const char *replace = text_in_replace->value();
+  fl_alert(find);
+  fl_alert(replace);
+  */
+  /*
+  delete text_in_find;
+  delete text_in_replace;
+  delete replace_all_btn;
+  delete RD_cancel_btn;
+  delete replace_next_btn;
+  delete replace_dialog_window;
+  */
+  text_in_find->value(search_string);
+  text_in_replace->value(replace_string);
+  replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
+  replace_dialog_window->show();
+  return replace_dialog_window;
+}
+
+void replace_next_cb() {
+  const char *TIF = text_in_find->value();
+  const char *TIR = text_in_replace->value();
+  // text in find is blank
+  if (TIF == NULL || *TIF == 0) return;
+  strcpy(search_string, TIF);
+  strcpy(replace_string, TIR);
+  int rpl_pos;
+  int rpl_r = buff->search_forward(
+    edit->insert_position(),
+    TIF,
+    &rpl_pos,
+    1
+  );
+  if (rpl_r) {
+    buff->remove(rpl_pos, rpl_pos + strlen(TIF));
+    buff->insert(rpl_pos, TIR);
+    buff->select(rpl_pos, rpl_pos + strlen(TIR));
+    edit->insert_position(rpl_pos + 1);
+    edit->show_insert_position();
+  } else {
+    fl_alert("No occurrences of \'%s\' found!", TIF);
+  }
+  close_dialog(replace_dialog_window, 0);
+}
+
+void replace_again_cb() {
+  // text in buffer is blank
+  if (*search_string == 0) {
+    replace_dialog();
+    return;
+  }
+  int rpl_pos;
+  int rpl_r = buff->search_forward(
+    edit->insert_position(),
+    search_string,
+    &rpl_pos,
+    1
+  );
+  if (rpl_r) {
+    buff->remove(rpl_pos, rpl_pos + strlen(search_string));
+    buff->insert(rpl_pos, search_string);
+    buff->select(rpl_pos, rpl_pos + strlen(replace_string));
+    edit->insert_position(rpl_pos + 1);
+    edit->show_insert_position();
+  } else {
+    fl_alert("No occurrences of \'%s\' found!", search_string);
+  }
+}
+
+void replace_all_cb() {
+  const char *TIF = text_in_find->value();
+  const char *TIR = text_in_replace->value();
+  // text in find is blank
+  if (TIF == NULL || *TIF == 0) return;
+  
+  strcpy(search_string, TIF);
+  strcpy(replace_string, TIR);
+  int current_pos = edit->insert_position();
+  edit->insert_position(0);
+  
+  int counts = 0;
+  int found = 1;
+  int srh_pos = 0;
+  int rpl_pos = 0;
+  bool resume = false;
+  
+  // disable coloring to speed up looping
+  if (color) {
+    color_cb();
+    resume = true;
+  }
+  
+  while (found) {
+    found = buff->search_forward(
+      srh_pos,
+      TIF,
+      &rpl_pos,
+      1
+    );
+    if (found) {
+      buff->remove(rpl_pos, rpl_pos + strlen(TIF));
+      buff->insert(rpl_pos, TIR);
+      counts++;
+    }
+    if (rpl_pos > srh_pos) srh_pos = rpl_pos + 1;
+  }
+  
+  if (resume) color_cb();
+  
+  if (counts) fl_message("Replaced %d occurrences.", counts);
+  else fl_alert("No occurrences of \'%s\' found!", TIF);
+  
+  close_dialog(replace_dialog_window, 0);
+  edit->insert_position(current_pos);
+}
+
+void close_dialog(Fl_Widget*, void* v) {
+  // fl_alert("Before deleting");
+  delete text_in_find;
+  delete text_in_replace;
+  delete replace_all_btn;
+  delete RD_cancel_btn;
+  delete replace_next_btn;
+  delete replace_dialog_window;
+  // fl_alert("After deleting");
 }
 
 Fl_Double_Window *win=(Fl_Double_Window *)0;
@@ -1495,6 +1657,22 @@ static void cb_indent_switch(Fl_Menu_*, void*) {
   auto_indent_switch();
 }
 
+static void cb_find_btn(Fl_Menu_*, void*) {
+  find_dialog();
+}
+
+static void cb_find_again_btn(Fl_Menu_*, void*) {
+  find_again_dialog();
+}
+
+static void cb_replace_btn(Fl_Menu_*, void*) {
+  replace_dialog();
+}
+
+static void cb_replace_again_btn(Fl_Menu_*, void*) {
+  replace_again_cb();
+}
+
 static void cb_ts_btn(Fl_Menu_*, void*) {
   ts_cb();
 }
@@ -1517,8 +1695,14 @@ Fl_Menu_Item menu_menu_bar[] = {
  {0,0,0,0,0,0,0,0,0},
  {"Colorful", 0,  (Fl_Callback*)cb_color_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Auto Indent", 0,  (Fl_Callback*)cb_indent_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Text size", 0,  (Fl_Callback*)cb_ts_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Style size", 0,  (Fl_Callback*)cb_ss_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"&Search", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"&Find", 0x40066,  (Fl_Callback*)cb_find_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Find A&gain", 0x40067,  (Fl_Callback*)cb_find_again_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"&Replace", 0x40072,  (Fl_Callback*)cb_replace_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Replace &Again", 0x40074,  (Fl_Callback*)cb_replace_again_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"Text size", 0,  (Fl_Callback*)cb_ts_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Style size", 0,  (Fl_Callback*)cb_ss_btn, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -1542,7 +1726,11 @@ int main(int argc, char **argv) {
   win->label(title);
   buffer_init();
   use_coloring();
-  // if (argc > 1) load_file(argv[1]);
+  int arg_file;
+  Fl::args(argc, argv, arg_file, &arg_parser);
+  if (argc > 1) load_file(argv[arg_file]);
+  memset(search_string, 0, 2048);
+  memset(replace_string, 0, 2048);
   win->callback((Fl_Callback *)close_cb, win);
   win->show(argc, argv);
   return Fl::run();
