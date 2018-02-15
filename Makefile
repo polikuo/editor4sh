@@ -1,10 +1,8 @@
 PREFIX = /usr/local
 INSTDIR = $(DESTDIR)/$(PREFIX)/bin
 
-TARGET = editor
-OBJ = editor.o
-#TARGET = temp
-#OBJ = temp.o
+TARGET = editor4sh
+OBJ = $(TARGET).o
 
 ARCH := $(shell uname -m)
 CXX_FLAGS_i686 := -march=i486 -mtune=i686
@@ -30,7 +28,7 @@ LDFLAGS += $(shell fltk-config --ldflags)
 
 all: $(OBJ)
 	$(CXX) -o $(TARGET) $(OBJ) $(CXXFLAGS) $(LDFLAGS)
-#	strip $(TARGET)
+	strip --strip-unneeded $(TARGET)
 
 clean:
 	rm -f $(TARGET) $(OBJ)
@@ -38,4 +36,3 @@ clean:
 install: all
 	mkdir -p $(INSTDIR)
 	cp -a $(TARGET) $(INSTDIR)
-

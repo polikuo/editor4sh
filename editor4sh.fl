@@ -23,7 +23,7 @@ decl {\#include <FL/Fl_File_Chooser.H>} {public global
 decl {\#include <errno.h>} {public global
 }
 
-decl {char const *SHELL = "\#!/bin/sh\\n";} {private global
+decl {char const *SHELL; // = "\#!/bin/sh\\n";} {private global
 }
 
 decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
@@ -32,7 +32,7 @@ decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
 decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
 }
 
-decl {bool color = false, auto_indent = false, indenting = false, changed = false;} {private global
+decl {bool color = false, auto_indent = false, indenting = false, changed = false, is_bash = false;} {private global
 }
 
 decl {Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();} {private global
@@ -82,25 +82,94 @@ edit->show_insert_position();
 buff->add_modify_callback(modification_cb, edit);} {}
 }
 
-Function {shebang()} {return_type void
+Function {chk_bash()} {return_type void
 } {
-  code {if (strlen(SHELL) == 0) return;
+  codeblock {if (buff->char_at(0) == 35 && buff->char_at(1) == 33)} {} {
+    comment {boolean is_bash
+check for shebang "\#!"} {in_source not_in_header
+    }
+    code {int firstline = buff->line_end(0);
+// either a pointer to the newline character ending the line
+// or a pointer to one character beyond the end of the buffer
+char *shell;
+shell = buff->text_range(firstline - 4, firstline);
+if (strcmp(shell, "bash") == 0) is_bash = true;
+else is_bash = false;
+free(shell);
+return;} {}
+  }
+  code {// default value
+is_bash = false;} {}
+}
+
+Function {shell_cb(int choice)} {selected return_type void
+} {
+  code {if (choice == 1) {
+  SHELL = "\#!/bin/sh\\n";
+  chk_bash();
+  if (is_bash) {
+    is_bash = false;
+    shebang(1);
+  } else shebang(0);
+  return;
+}
+if (choice == 2) {
+  SHELL = "\#!/usr/bin/env bash\\n";
+  chk_bash();
+  if (is_bash) shebang(0);
+  else {
+    is_bash = true;
+    shebang(1);
+  }
+  return;
+}
+SHELL = NULL;
+chk_bash();
+if (is_bash) {
+  is_bash = false;
+  shebang(1);
+} else shebang(0);} {}
+}
+
+Function {shebang(int restyle)} {open return_type void
+} {
+  code {int shell_len = strlen(SHELL);
+if (shell_len == 0) {
+  if (restyle) stylebuf_init();
+  return;
+}
 int firstline, current_pos;
+char style[21];
 current_pos = edit->insert_position();
-// search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
-int found = buff->search_forward(0, "\\n", &firstline);
-if (found) {
-  buff->select(0, firstline+1);
-  buff->remove_selection();
-  buff->insert(0, SHELL);
-  edit->insert_position(current_pos + strlen(SHELL) - firstline - 1);
-  edit->show_insert_position();
+
+if (color && !restyle) {
+  memset(style, 'J', shell_len - 1);
+  style[shell_len - 1] = 10; // '\\n'
+  style[shell_len] = 0; // '\\0'
+}
+
+// check for shebang "\#!"
+if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
+  // search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
+  int found = buff->search_forward(0, "\\n", &firstline);
+  if (found) {
+    buff->replace(0, firstline + 1, SHELL);
+    if (color && !restyle) stylebuf->replace(0, firstline + 1, style);
+    edit->insert_position(current_pos + shell_len - firstline - 1);
+  } else {
+    // no newline char
+    buff->text(SHELL);
+    if (color) stylebuf->text(style);
+    edit->insert_position(shell_len);
+  }
 } else {
-  // no newline char
-  buff->text(SHELL);
-  edit->insert_position(strlen(SHELL));
-  edit->show_insert_position();
-}} {}
+  buff->insert(0, SHELL);
+  if (color && !restyle) stylebuf->insert(0, style);
+  edit->insert_position(current_pos + shell_len);
+}
+edit->show_insert_position();
+// restyle, "is_bash" has been changed
+if (restyle) stylebuf_init();} {}
 }
 
 Function {check_saved(void)} {return_type int
@@ -116,14 +185,19 @@ if (r == 1) {
   save_cb(); // Save the file...
   return !changed;
 }
-if (r == 2) changed = false;
+// if (r == 2) changed = false;
 return r;} {}
 }
 
 Function {new_cb()} {return_type void
 } {
   code {if (!check_saved()) return;
-// coloring
+if (SHELL) {
+  buff->text(SHELL);
+  // coloring
+  if (color) stylebuf_init();
+}
+/*
 if (color) {
   color_cb(); // called twice
   buff->text(SHELL);
@@ -131,6 +205,7 @@ if (color) {
 } else {
   buff->text(SHELL);
 }
+*/
 edit->insert_position(strlen(SHELL));
 edit->show_insert_position();
 strcpy(filename, "");
@@ -139,7 +214,7 @@ win->label(title);
 changed = false;} {}
 }
 
-Function {save_file(const char *newfile)} {open return_type void
+Function {save_file(const char *newfile)} {return_type void
 } {
   code {// Save file
 // auto append trailing "\\n"
@@ -202,14 +277,25 @@ int lf;
 lf = buff->loadfile(newfile);
 if (lf) {
   fl_alert("Error while loading file \\'%s\\':\\n%s.", newfile, strerror(errno));
-  if (color_resume) color_cb();
 } else {
   strcpy(filename, newfile);
   strcpy(title, newfile);
   win->label(title);
   changed = false;
-  if (color_resume) color_cb();
 }} {}
+  code {// is_bash
+// check for shebang "\#!"
+if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
+  int firstline = buff->line_end(0);
+  // either a pointer to the newline character ending the line
+  // or a pointer to one character beyond the end of the buffer
+  char *shell;
+  shell = buff->text_range(firstline - 4, firstline);
+  if (strcmp(shell, "bash") == 0) is_bash = true;
+  else is_bash = false;
+  free(shell);
+}
+if (color_resume) color_cb();} {}
 }
 
 Function {style_unfinished_cb(int, void*)} {return_type void
@@ -226,7 +312,7 @@ fl_alert("style_unfinished_cb");} {in_source not_in_header
 comment {busybox
 List of known busybox commands...
 https://busybox.net/downloads/BusyBox.html
-} {in_source not_in_header
+} {not_in_source in_header
 }
 
 decl {const char *applets[] = {
@@ -539,55 +625,163 @@ decl {const char *applets[] = {
   "yes",
   "zcat",
   "zcip"
-};} {private global
+};} {public global
 }
 
 comment {bourne_builtins
-List of known bourne shell built-in variables...
 List of known bourne shell built-in functions...
-List of known bourne shell conditional statements...} {in_source not_in_header
+  $ help
+List of known bourne shell conditional statements...} {not_in_source in_header
 }
 
 decl {const char *bourne_function[] = {
   "alias",
+  "bg",
   "break",
   "cd",
+  "chdir",
+  "command",
   "continue",
+  "echo",
   "eval",
   "exec",
   "exit",
   "export",
+  "false",
+  "fg",
   "getopts",
   "hash",
+  "help",
+  "history",
+  "jobs",
+  "kill",
+  "let",
+  "local",
+  "printf",
   "pwd",
   "read",
   "readonly",
   "return",
+  "set",
   "shift",
   "source",
   "test",
   "times",
   "trap",
+  "true",
+  "type",
+  "ulimit",
   "umask",
-  "unset"
-};} {private global
+  "unalias",
+  "unset",
+  "wait"
+};} {public global
 }
 
-decl {const char *bourne_condition[] = {
+decl {const char *bourne_keys[] = {
   "case",
   "do",
   "done",
   "elif",
+  "else",
   "esac",
   "fi",
   "for",
   "if",
   "in",
-  "select",
   "then",
   "until",
+  "while",
+};} {public global
+}
+
+comment {bourne_again_builtins
+List of known bourne again shell built-in functions...
+  $ compgen -b
+List of known bourne again shell conditional statements...
+  $ compgen -k} {not_in_source in_header
+}
+
+decl {const char *bourne_again_function[] = {
+  "alias",
+  "bg",
+  "bind",
+  "break",
+  "builtin",
+  "caller",
+  "cd",
+  "command",
+  "compgen",
+  "complete",
+  "compopt",
+  "continue",
+  "declare",
+  "dirs",
+  "disown",
+  "echo",
+  "enable",
+  "eval",
+  "exec",
+  "exit",
+  "export",
+  "false",
+  "fc",
+  "fg",
+  "getopts",
+  "hash",
+  "help",
+  "history",
+  "jobs",
+  "kill",
+  "let",
+  "local",
+  "logout",
+  "mapfile",
+  "popd",
+  "printf",
+  "pushd",
+  "pwd",
+  "read",
+  "readarray",
+  "readonly",
+  "return",
+  "set",
+  "shift",
+  "shopt",
+  "source",
+  "suspend",
+  "test",
+  "times",
+  "trap",
+  "true",
+  "type",
+  "typeset",
+  "ulimit",
+  "umask",
+  "unalias",
+  "unset",
+  "wait"
+};} {public global
+}
+
+decl {const char *bourne_again_keys[] = {
+  "case",
+  "do",
+  "done",
+  "elif",
+  "else",
+  "esac",
+  "fi",
+  "for",
+  "function",
+  "if",
+  "in",
+  "select",
+  "then",
+  "time",
+  "until",
   "while"
-};} {private global
+};} {public global
 }
 
 decl {struct syntax {
@@ -601,7 +795,7 @@ decl {struct syntax {
   int pssp; // previous scan starting position
   int cs; // $(command substitution)
   int p; // (parentheses) 40 41
-};} {private global
+};} {public global
 }
 
 decl {struct syntax VARS;} {private global
@@ -637,6 +831,27 @@ address_to_result,
 color_style(A~K)
 } {in_source not_in_header
   }
+  codeblock {if (is_bash)} {open
+  } {
+    code {int bourne_again;
+bourne_again = compare_keywords(
+  textbuff,
+  bourne_again_function,
+  sizeof(bourne_again_function)/sizeof(*bourne_again_function),
+  scanned_text,
+  68
+);
+if (bourne_again == 0) {
+  bourne_again = compare_keywords(
+    textbuff,
+    bourne_again_keys,
+    sizeof(bourne_again_keys)/sizeof(*bourne_again_keys),
+    scanned_text,
+    75
+  );
+}
+return bourne_again;} {}
+  }
   code {int bourne;
 bourne = compare_keywords(
   textbuff,
@@ -648,33 +863,13 @@ bourne = compare_keywords(
 if (bourne == 0) {
   bourne = compare_keywords(
     textbuff,
-    bourne_condition,
-    sizeof(bourne_condition)/sizeof(*bourne_condition),
+    bourne_keys,
+    sizeof(bourne_keys)/sizeof(*bourne_keys),
     scanned_text,
     75
   );
 }
 return bourne;} {}
-  code {/*
-int bourne;
-bourne = compare_keywords(
-  &textbuff[0],
-  bourne_function,
-  sizeof(bourne_function)/sizeof(*bourne_function),
-  &scanned_text[0],
-  68
-);
-if (bourne == 0) {
-  bourne = compare_keywords(
-    &textbuff[0],
-    bourne_condition,
-    sizeof(bourne_condition)/sizeof(*bourne_condition),
-    &scanned_text[0],
-    75
-  );
-}
-return bourne;
-*/} {}
 }
 
 Function {is_special(char ascii)} {return_type int
@@ -805,11 +1000,13 @@ for (;ai < (current_pos - lsp);ai++) {
   else break;
 }
 if (ai == 0) {
+  /*
   if (color) {
     indention[0] = 10; // '\\n'
     indention[0] = 0; // '\\0'
     stylebuf->replace(current_pos, current_pos, indention);
   }
+  */
   free(indention);
   free(line);
   edit->insert_position(current_pos - 1);
@@ -1352,6 +1549,7 @@ for (;j < bufflen - pos; j++) \{
       if (UPDATE.cs == 0 && !UPDATE.bq)
       continue;
     \}
+    // when keywords are overlapped, the "bourne_builtins" one is used
     m = bourne_builtins(&buff_copy[j+pos], &scan[j]);
     if (m == 0) m = busybox(&buff_copy[j+pos], &scan[j]);
     j += m;
@@ -1486,7 +1684,7 @@ decl {char search_string[2048];} {private global
 decl {char replace_string[2048];} {private global
 }
 
-Function {find_dialog()} {open return_type void
+Function {find_dialog()} {return_type void
 } {
   code {const char *SS = fl_input("Search String:", search_string);
 // Search string is blank
@@ -1508,7 +1706,7 @@ if (sf_r) {
 strcpy(search_string, SS);} {}
 }
 
-Function {find_again_dialog()} {open return_type void
+Function {find_again_dialog()} {return_type void
 } {
   code {if (*search_string == 0) {
   // Search string is blank
@@ -1531,34 +1729,33 @@ if (sf_r) {
 }} {}
 }
 
-Function {replace_dialog()} {open
-} {
+Function {replace_dialog()} {} {
   Fl_Window replace_dialog_window {
-    label Replace open
+    label Replace
     xywh {484 562 320 155} type Double hide
   } {
     Fl_Input text_in_find {
       label {Find:}
-      xywh {72 20 230 30}
+      xywh {72 20 230 30} box PLASTIC_DOWN_BOX
     }
     Fl_Input text_in_replace {
       label {Replace:}
-      xywh {72 60 230 30}
+      xywh {72 60 230 30} box PLASTIC_DOWN_BOX
     }
     Fl_Button replace_all_btn {
       label {Replace All}
       callback {replace_all_cb();}
-      xywh {15 110 85 30}
+      xywh {15 110 85 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     }
     Fl_Return_Button replace_next_btn {
       label {Replace Next}
       callback {replace_next_cb();}
-      xywh {105 110 130 30}
+      xywh {105 110 130 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     }
     Fl_Button RD_cancel_btn {
       label Cancel
       callback {close_dialog(replace_dialog_window, 0);}
-      xywh {240 110 64 30}
+      xywh {240 110 64 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     }
   }
   code {/*
@@ -1582,7 +1779,7 @@ replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
 replace_dialog_window->show();} {}
 }
 
-Function {replace_next_cb()} {open return_type void
+Function {replace_next_cb()} {return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -1609,7 +1806,7 @@ if (rpl_r) {
 close_dialog(replace_dialog_window, 0);} {}
 }
 
-Function {replace_again_cb()} {open return_type void
+Function {replace_again_cb()} {return_type void
 } {
   code {// text in buffer is blank
 if (*search_string == 0) {
@@ -1634,7 +1831,7 @@ if (rpl_r) {
 }} {}
 }
 
-Function {replace_all_cb()} {open return_type void
+Function {replace_all_cb()} {return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -1682,7 +1879,7 @@ close_dialog(replace_dialog_window, 0);
 edit->insert_position(current_pos);} {}
 }
 
-Function {close_dialog(Fl_Widget*, void* v)} {open return_type void
+Function {close_dialog(Fl_Widget*, void* v)} {return_type void
 } {
   code {// fl_alert("Before deleting");
 delete text_in_find;
@@ -1697,7 +1894,7 @@ delete replace_dialog_window;
 Function {} {open
 } {
   Fl_Window win {open
-    xywh {470 242 425 320} type Double box PLASTIC_UP_BOX resizable visible
+    xywh {640 206 425 320} type Double box PLASTIC_UP_BOX resizable visible
   } {
     Fl_Text_Editor edit {
       xywh {1 29 424 288} box PLASTIC_DOWN_FRAME textfont 4 textsize 20 resizable
@@ -1706,7 +1903,7 @@ Function {} {open
       xywh {0 0 425 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     } {
       Submenu file_menu {
-        label {&File}
+        label File
         xywh {0 0 67 24}
       } {
         MenuItem new_bt {
@@ -1731,39 +1928,27 @@ Function {} {open
         }
       }
       Submenu shell_menu {
-        label {&Shell}
+        label Shell open
         xywh {0 0 67 24}
       } {
         MenuItem sh {
           label {POSIX sh}
-          callback {SHELL = "\#!/bin/sh\\n";
-  shebang();}
+          callback {shell_cb(1);}
           xywh {0 0 34 24} shortcut 0x80073
         }
         MenuItem bash {
           label {ENV bash}
-          callback {SHELL = "\#!/usr/bin/env bash\\n";
-  shebang();}
+          callback {shell_cb(2);}
           xywh {0 0 34 24} shortcut 0x80062
         }
-        MenuItem plain_text {
-          label {Plain text}
-          callback {SHELL = "";}
+        MenuItem other {
+          label Other
+          callback {shell_cb(0);}
           xywh {0 0 30 20}
         }
       }
-      MenuItem color_switch {
-        label Colorful
-        callback {color_cb();}
-        xywh {0 0 67 24}
-      }
-      MenuItem indent_switch {
-        label {Auto Indent}
-        callback {auto_indent_switch();}
-        xywh {0 0 30 20}
-      }
       Submenu search_menu {
-        label {&Search} open
+        label Search open
         xywh {0 0 63 20}
       } {
         MenuItem find_btn {
@@ -1787,6 +1972,16 @@ Function {} {open
           xywh {0 0 30 20} shortcut 0x40074
         }
       }
+      MenuItem color_switch {
+        label Colorful
+        callback {color_cb();}
+        xywh {0 0 67 24}
+      }
+      MenuItem indent_switch {
+        label {Auto Indent}
+        callback {auto_indent_switch();}
+        xywh {0 0 30 20}
+      }
       MenuItem ts_btn {
         label {Text size}
         callback {ts_cb();}
@@ -1794,7 +1989,7 @@ Function {} {open
       }
       MenuItem ss_btn {
         label {Style size}
-        callback {ss_cb();} selected
+        callback {ss_cb();}
         xywh {0 0 30 20} hide deactivate
       }
     }
