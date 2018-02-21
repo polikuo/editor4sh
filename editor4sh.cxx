@@ -1049,13 +1049,14 @@ int arg_parser(int argc, char **argv, int &i) {
     i++;
     return 1;
   }
-  if(strcmp(argv[i], "-h") == 0) {
+  if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
     printf(
       "%s [-options] [file]\n"
+      "-h, --help Show this help message\n"
       "Set default shebang to\n"
       "-shell\t#!/bin/sh\n"
       "-bash\t#!/usr/bin/env bash\n"
-      "-other\tother unknown shebang\n"
+      "-other\tOther unknown shebang\n"
       "The later option will replace any previous one(s)\n"
       "Any arguements after the \"file\" will be ignored\n"
       , basename(argv[0])
@@ -1356,7 +1357,7 @@ Fl_Menu_Item menu_menu_bar[] = {
  {"Shell", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"POSIX sh", 0x80073,  (Fl_Callback*)cb_sh, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"ENV bash", 0x80062,  (Fl_Callback*)cb_bash, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
- {"Other", 0,  (Fl_Callback*)cb_other, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Other", 0x8006f,  (Fl_Callback*)cb_other, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
  {"Search", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&Find", 0x40066,  (Fl_Callback*)cb_find_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},

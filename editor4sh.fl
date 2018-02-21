@@ -1612,21 +1612,21 @@ if(strcmp(argv[i], "-other") == 0) {
   i++;
   return 1;
 }
-if(strcmp(argv[i], "-h") == 0) {
+if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
   printf(
     "%s [-options] [file]\\n"
+    "-h, --help Show this help message\\n"
     "Set default shebang to\\n"
     "-shell\\t\#!/bin/sh\\n"
     "-bash\\t\#!/usr/bin/env bash\\n"
-    "-other\\tother unknown shebang\\n"
+    "-other\\tOther unknown shebang\\n"
     "The later option will replace any previous one(s)\\n"
     "Any arguements after the \\"file\\" will be ignored\\n"
     , basename(argv[0])
   );
   exit(0);
 }
-return 0;} {selected
-  }
+return 0;} {}
   comment {http://www.fltk.org/articles.php?L744} {in_source not_in_header
   }
 }
@@ -1840,7 +1840,7 @@ delete replace_dialog_window;
 
 Function {} {open
 } {
-  Fl_Window win {
+  Fl_Window win {open
     xywh {640 206 425 320} type Double box PLASTIC_UP_BOX resizable visible
   } {
     Fl_Text_Editor edit {
@@ -1890,8 +1890,8 @@ Function {} {open
         }
         MenuItem other {
           label Other
-          callback {shell_cb(0);}
-          xywh {0 0 30 20}
+          callback {shell_cb(0);} selected
+          xywh {0 0 30 20} shortcut 0x8006f
         }
       }
       Submenu search_menu {
