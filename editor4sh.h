@@ -10,18 +10,6 @@
 #include <FL/Fl_Button.H>
 #include <FL/Fl_File_Chooser.H>
 #include <errno.h>
-void buffer_init();
-void chk_bash();
-void shell_cb(int choice);
-void shebang(int restyle);
-int check_saved(void);
-void new_cb();
-void save_file(const char *newfile);
-void saveas_cb();
-void save_cb();
-void open_cb();
-void load_file(char *newfile);
-void style_unfinished_cb(int, void*);
 // busybox
 // List of known busybox commands...
 // https://busybox.net/downloads/BusyBox.html
@@ -493,10 +481,21 @@ struct syntax {
   int cs; // $(command substitution)
   int p; // (parentheses) 40 41
 };
+void buffer_init();
+void chk_bash();
+void shell_cb(int choice);
+void shebang(int restyle);
+int check_saved();
+void new_cb();
+void save_file(const char *newfile);
+void saveas_cb();
+void save_cb();
+void open_cb();
+void load_file(char *newfile);
+void style_unfinished_cb(int, void*);
 int busybox(char *textbuff, char *scanned_text);
 int bourne_builtins(char *textbuff, char *scanned_text);
 int is_special(char ascii);
-void use_coloring();
 void disable_color();
 void auto_indent_switch();
 void auto_indent_cb(int lsp, int pos, char *line);
@@ -504,11 +503,9 @@ void stylebuf_init();
 void color_cb();
 int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii);
 void setvars(char *buff_copy, int pos);
-int scan_forward(char *buff_copy, int bufflen, int pos);
+void scan_forward(char *buff_copy, int bufflen, int pos);
 void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg);
 void close_cb(Fl_Widget*, void* v);
-void ts_cb();
-void ss_cb();
 int arg_parser(int argc, char **argv, int &i);
 void find_dialog();
 void find_again_dialog();
@@ -549,6 +546,4 @@ extern Fl_Menu_Item menu_menu_bar[];
 #define replace_again_btn (menu_menu_bar+15)
 #define color_switch (menu_menu_bar+17)
 #define indent_switch (menu_menu_bar+18)
-#define ts_btn (menu_menu_bar+19)
-#define ss_btn (menu_menu_bar+20)
 #endif

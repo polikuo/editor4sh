@@ -23,292 +23,6 @@ decl {\#include <FL/Fl_File_Chooser.H>} {public global
 decl {\#include <errno.h>} {public global
 }
 
-decl {char const *SHELL; // = "\#!/bin/sh\\n";} {private global
-}
-
-decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
-}
-
-decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
-}
-
-decl {bool color = false, auto_indent = false, indenting = false, changed = false, is_bash = false;} {private global
-}
-
-decl {Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();} {private global
-}
-
-decl {\#define TS 14} {private global
-}
-
-comment {Style table
-http://www.fltk.org/doc-1.3/Enumerations_8H.html
-http://www.fltk.org/doc-1.3/fltk-colormap.png
-A - Plain
-B - busybox
-C - special_characters
-D - bourne_function
-E - command substitution
-F - Single Quotes
-G - Double Quotes
-H - escapes
-I - bourne_variables
-J - comments
-K - bourne_constructs} {in_source not_in_header
-}
-
-decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
-  { FL_BLACK, FL_COURIER, TS },
-  { 82, FL_COURIER_BOLD, TS },
-  { FL_DARK_MAGENTA, FL_COURIER_BOLD,TS },
-  { 92, FL_COURIER_BOLD, TS },
-  { FL_DARK_GREEN, FL_COURIER, TS },
-  { FL_BLUE, FL_COURIER_BOLD, TS },
-  { FL_DARK_CYAN, FL_COURIER,TS },
-  { FL_DARK_YELLOW, FL_COURIER,TS },
-  { FL_DARK_RED, FL_COURIER_BOLD, TS },
-  { FL_DARK2, FL_COURIER_ITALIC, TS },
-  { FL_MAGENTA, FL_COURIER_BOLD, TS }
-};} {private global
-}
-
-Function {buffer_init()} {return_type void
-} {
-  code {// attach buffer to  editor
-buff->text(SHELL);
-edit->buffer(buff);
-edit->insert_position(10);
-edit->show_insert_position();
-buff->add_modify_callback(modification_cb, edit);} {}
-}
-
-Function {chk_bash()} {return_type void
-} {
-  codeblock {if (buff->char_at(0) == 35 && buff->char_at(1) == 33)} {} {
-    comment {boolean is_bash
-check for shebang "\#!"} {in_source not_in_header
-    }
-    code {int firstline = buff->line_end(0);
-// either a pointer to the newline character ending the line
-// or a pointer to one character beyond the end of the buffer
-char *shell;
-shell = buff->text_range(firstline - 4, firstline);
-if (strcmp(shell, "bash") == 0) is_bash = true;
-else is_bash = false;
-free(shell);
-return;} {}
-  }
-  code {// default value
-is_bash = false;} {}
-}
-
-Function {shell_cb(int choice)} {selected return_type void
-} {
-  code {if (choice == 1) {
-  SHELL = "\#!/bin/sh\\n";
-  chk_bash();
-  if (is_bash) {
-    is_bash = false;
-    shebang(1);
-  } else shebang(0);
-  return;
-}
-if (choice == 2) {
-  SHELL = "\#!/usr/bin/env bash\\n";
-  chk_bash();
-  if (is_bash) shebang(0);
-  else {
-    is_bash = true;
-    shebang(1);
-  }
-  return;
-}
-SHELL = NULL;
-chk_bash();
-if (is_bash) {
-  is_bash = false;
-  shebang(1);
-} else shebang(0);} {}
-}
-
-Function {shebang(int restyle)} {open return_type void
-} {
-  code {int shell_len = strlen(SHELL);
-if (shell_len == 0) {
-  if (restyle) stylebuf_init();
-  return;
-}
-int firstline, current_pos;
-char style[21];
-current_pos = edit->insert_position();
-
-if (color && !restyle) {
-  memset(style, 'J', shell_len - 1);
-  style[shell_len - 1] = 10; // '\\n'
-  style[shell_len] = 0; // '\\0'
-}
-
-// check for shebang "\#!"
-if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
-  // search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
-  int found = buff->search_forward(0, "\\n", &firstline);
-  if (found) {
-    buff->replace(0, firstline + 1, SHELL);
-    if (color && !restyle) stylebuf->replace(0, firstline + 1, style);
-    edit->insert_position(current_pos + shell_len - firstline - 1);
-  } else {
-    // no newline char
-    buff->text(SHELL);
-    if (color) stylebuf->text(style);
-    edit->insert_position(shell_len);
-  }
-} else {
-  buff->insert(0, SHELL);
-  if (color && !restyle) stylebuf->insert(0, style);
-  edit->insert_position(current_pos + shell_len);
-}
-edit->show_insert_position();
-// restyle, "is_bash" has been changed
-if (restyle) stylebuf_init();} {}
-}
-
-Function {check_saved(void)} {return_type int
-} {
-  code {// 1:good, 0:cancel
-if (!changed) return 1;
-int r = fl_choice(
-  "The current file has not been saved.\\nWould you like to save it now?",
-  "Cancel", "Save", "Don't Save"
-);
-// Cancel = 0, Save = 1, Don't Save = 2
-if (r == 1) {
-  save_cb(); // Save the file...
-  return !changed;
-}
-// if (r == 2) changed = false;
-return r;} {}
-}
-
-Function {new_cb()} {return_type void
-} {
-  code {if (!check_saved()) return;
-if (SHELL) {
-  buff->text(SHELL);
-  // coloring
-  if (color) stylebuf_init();
-}
-/*
-if (color) {
-  color_cb(); // called twice
-  buff->text(SHELL);
-  color_cb(); // to refresh
-} else {
-  buff->text(SHELL);
-}
-*/
-edit->insert_position(strlen(SHELL));
-edit->show_insert_position();
-strcpy(filename, "");
-strcpy(title, "");
-win->label(title);
-changed = false;} {}
-}
-
-Function {save_file(const char *newfile)} {return_type void
-} {
-  code {// Save file
-// auto append trailing "\\n"
-int buff_end;
-buff_end = buff->length();
-char last_char;
-last_char = buff->char_at(buff_end - 1);
-if (last_char != 10) {
-  buff->append("\\n");
-  edit->insert_position(buff_end + 1);
-  edit->show_insert_position();
-}
-// fl_alert("Saving to file %s", newfile);
-if (buff->savefile(newfile)) {
-  fl_alert("Error writing to file \\'%s\\':\\n%s.", newfile, strerror(errno));
-} else {
-  strcpy(filename, newfile);
-  strcpy(title, newfile);
-  win->label(title);
-  changed = false;
-  \#ifdef __linux__
-    char chmod[FL_PATH_MAX + 9];
-    sprintf(chmod, "chmod +x %s", newfile);
-    system(chmod);
-  \#endif
-}} {}
-}
-
-Function {saveas_cb()} {return_type void
-} {
-  code {char *sfa;
-sfa = fl_file_chooser("Save File As ?", "*", filename);
-if(sfa != NULL) save_file(sfa);} {}
-}
-
-Function {save_cb()} {return_type void
-} {
-  code {if (filename[0] == 0) {
-  // No filename
-  saveas_cb();
-} else {
-  save_file(filename);
-}} {}
-}
-
-Function {open_cb()} {return_type void
-} {
-  code {if (!check_saved()) return;
-char *newfile = fl_file_chooser("Open File ?", "*", filename);
-if (newfile != NULL) load_file(newfile);} {}
-}
-
-Function {load_file(char *newfile)} {return_type void
-} {
-  code {bool color_resume = color;
-if (color_resume) { // disable color before loading
-  color_cb();
-}
-int lf;
-lf = buff->loadfile(newfile);
-if (lf) {
-  fl_alert("Error while loading file \\'%s\\':\\n%s.", newfile, strerror(errno));
-} else {
-  strcpy(filename, newfile);
-  strcpy(title, newfile);
-  win->label(title);
-  changed = false;
-}} {}
-  code {// is_bash
-// check for shebang "\#!"
-if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
-  int firstline = buff->line_end(0);
-  // either a pointer to the newline character ending the line
-  // or a pointer to one character beyond the end of the buffer
-  char *shell;
-  shell = buff->text_range(firstline - 4, firstline);
-  if (strcmp(shell, "bash") == 0) is_bash = true;
-  else is_bash = false;
-  free(shell);
-}
-if (color_resume) color_cb();} {}
-}
-
-Function {style_unfinished_cb(int, void*)} {return_type void
-} {
-  comment {call back for highlight data
-if style 'A' is found,
-this call back will be called.
-void *cbArg will be passed as arguement
-
-fl_alert("style_unfinished_cb");} {in_source not_in_header
-  }
-}
-
 comment {busybox
 List of known busybox commands...
 https://busybox.net/downloads/BusyBox.html
@@ -801,6 +515,309 @@ decl {struct syntax {
 decl {struct syntax VARS;} {private global
 }
 
+decl {const char *SHELL = ""; // = "\#!/bin/sh\\n";} {private global
+}
+
+decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
+}
+
+decl {char search_string[2048];} {private global
+}
+
+decl {char replace_string[2048];} {private global
+}
+
+decl {bool color = false, auto_indent = false, indenting = false, changed = false, is_bash = false;} {private global
+}
+
+decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
+}
+
+decl {Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();} {private global
+}
+
+decl {\#define TS 14} {private global
+}
+
+comment {Style table
+http://www.fltk.org/doc-1.3/Enumerations_8H.html
+http://www.fltk.org/doc-1.3/fltk-colormap.png
+A - Plain
+B - busybox
+C - special_characters
+D - bourne_function
+E - command substitution
+F - Single Quotes
+G - Double Quotes
+H - escapes
+I - bourne_variables
+J - comments
+K - bourne_constructs} {in_source not_in_header
+}
+
+decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
+  { FL_BLACK, FL_COURIER, TS },
+  { 82, FL_COURIER_BOLD, TS },
+  { FL_DARK_MAGENTA, FL_COURIER_BOLD,TS },
+  { 92, FL_COURIER_BOLD, TS },
+  { FL_DARK_GREEN, FL_COURIER, TS },
+  { FL_BLUE, FL_COURIER_BOLD, TS },
+  { FL_DARK_CYAN, FL_COURIER,TS },
+  { FL_DARK_YELLOW, FL_COURIER,TS },
+  { FL_DARK_RED, FL_COURIER_BOLD, TS },
+  { FL_DARK2, FL_COURIER_ITALIC, TS },
+  { FL_MAGENTA, FL_COURIER_BOLD, TS }
+};} {private global
+}
+
+Function {buffer_init()} {open return_type void
+} {
+  code {// attach buffer to editor
+buff->text(SHELL);
+edit->buffer(buff);
+edit->insert_position(strlen(SHELL));
+edit->show_insert_position();
+buff->add_modify_callback(modification_cb, edit);
+// associate style & buffer
+edit->highlight_data(
+  stylebuf,
+  styletable,
+  sizeof(styletable) / sizeof(styletable[0]),
+  'A',
+  style_unfinished_cb,
+  0 // void*
+);
+// buff->add_modify_callback(style_update, edit);
+// buff->add_modify_callback(modification_cb, edit);} {}
+}
+
+Function {chk_bash()} {return_type void
+} {
+  codeblock {if (buff->char_at(0) == 35 && buff->char_at(1) == 33)} {} {
+    comment {boolean is_bash
+check for shebang "\#!"} {in_source not_in_header
+    }
+    code {int firstline = buff->line_end(0);
+// either a pointer to the newline character ending the line
+// or a pointer to one character beyond the end of the buffer
+char *shell;
+shell = buff->text_range(firstline - 4, firstline);
+if (strcmp(shell, "bash") == 0) is_bash = true;
+else is_bash = false;
+free(shell);
+return;} {}
+  }
+  code {// default value
+is_bash = false;} {}
+}
+
+Function {shell_cb(int choice)} {open return_type void
+} {
+  code {if (choice == 1) {
+  SHELL = "\#!/bin/sh\\n";
+  chk_bash();
+  if (is_bash) {
+    is_bash = false;
+    shebang(1);
+  } else shebang(0);
+  return;
+}
+if (choice == 2) {
+  SHELL = "\#!/usr/bin/env bash\\n";
+  chk_bash();
+  if (is_bash) shebang(0);
+  else {
+    is_bash = true;
+    shebang(1);
+  }
+  return;
+}
+SHELL = "";
+chk_bash();
+if (is_bash) {
+  is_bash = false;
+  shebang(1);
+} else shebang(0);} {}
+}
+
+Function {shebang(int restyle)} {return_type void
+} {
+  code {int shell_len = strlen(SHELL);
+if (shell_len == 0) {
+  if (restyle && color) stylebuf_init();
+  return;
+}
+int firstline, current_pos;
+char style[21];
+current_pos = edit->insert_position();
+
+if (color && !restyle) {
+  memset(style, 'J', shell_len - 1);
+  style[shell_len - 1] = 10; // '\\n'
+  style[shell_len] = 0; // '\\0'
+}
+
+// check for shebang "\#!"
+if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
+  // search_forward(int startPos, const char *searchString, int *foundPos, int matchCase = 0)
+  int found = buff->search_forward(0, "\\n", &firstline);
+  if (found) {
+    buff->replace(0, firstline + 1, SHELL);
+    if (color && !restyle) stylebuf->replace(0, firstline + 1, style);
+    edit->insert_position(current_pos + shell_len - firstline - 1);
+  } else {
+    // no newline char
+    buff->text(SHELL);
+    if (color) stylebuf->text(style);
+    edit->insert_position(shell_len);
+  }
+} else {
+  buff->insert(0, SHELL);
+  if (color && !restyle) stylebuf->insert(0, style);
+  edit->insert_position(current_pos + shell_len);
+}
+edit->show_insert_position();
+// restyle, "is_bash" has been changed
+if (restyle && color) stylebuf_init();} {}
+}
+
+Function {check_saved()} {return_type int
+} {
+  code {// 1:good, 0:cancel
+if (!changed) return 1;
+int r = fl_choice(
+  "The current file has not been saved.\\nWould you like to save it now?",
+  "Cancel", "Save", "Don't Save"
+);
+// Cancel = 0, Save = 1, Don't Save = 2
+if (r == 1) {
+  save_cb(); // Save the file...
+  return !changed;
+}
+// if (r == 2) changed = false;
+return r;} {}
+}
+
+Function {new_cb()} {return_type void
+} {
+  code {if (!check_saved()) return;
+if (SHELL) {
+  buff->text(SHELL);
+  // coloring
+  if (color) stylebuf_init();
+}
+/*
+if (color) {
+  color_cb(); // called twice
+  buff->text(SHELL);
+  color_cb(); // to refresh
+} else {
+  buff->text(SHELL);
+}
+*/
+edit->insert_position(strlen(SHELL));
+edit->show_insert_position();
+strcpy(filename, "");
+strcpy(title, "");
+win->label(title);
+changed = false;} {}
+}
+
+Function {save_file(const char *newfile)} {return_type void
+} {
+  code {// Save file
+// auto append trailing "\\n"
+int buff_end;
+buff_end = buff->length();
+char last_char;
+last_char = buff->char_at(buff_end - 1);
+if (last_char != 10) {
+  buff->append("\\n");
+  edit->insert_position(buff_end + 1);
+  edit->show_insert_position();
+}
+// fl_alert("Saving to file %s", newfile);
+if (buff->savefile(newfile)) {
+  fl_alert("Error writing to file \\'%s\\':\\n%s.", newfile, strerror(errno));
+} else {
+  strcpy(filename, newfile);
+  strcpy(title, newfile);
+  win->label(title);
+  changed = false;
+  \#ifdef __linux__
+    char chmod[FL_PATH_MAX + 9];
+    sprintf(chmod, "chmod +x %s", newfile);
+    system(chmod);
+  \#endif
+}} {}
+}
+
+Function {saveas_cb()} {return_type void
+} {
+  code {char *sfa;
+sfa = fl_file_chooser("Save File As ?", "*", filename);
+if(sfa != NULL) save_file(sfa);} {}
+}
+
+Function {save_cb()} {return_type void
+} {
+  code {if (filename[0] == 0) {
+  // No filename
+  saveas_cb();
+} else {
+  save_file(filename);
+}} {}
+}
+
+Function {open_cb()} {return_type void
+} {
+  code {if (!check_saved()) return;
+char *newfile = fl_file_chooser("Open File ?", "*", filename);
+if (newfile != NULL) load_file(newfile);} {}
+}
+
+Function {load_file(char *newfile)} {return_type void
+} {
+  code {bool color_resume = color;
+// disable color before loading
+if (color_resume) {
+  color_cb();
+}
+int lf;
+lf = buff->loadfile(newfile);
+if (lf) {
+  fl_alert("Error while loading file \\'%s\\':\\n%s.", newfile, strerror(errno));
+} else {
+  strcpy(filename, newfile);
+  strcpy(title, newfile);
+  win->label(title);
+  changed = false;
+}} {}
+  code {// is_bash
+// check for shebang "\#!"
+if (buff->char_at(0) == 35 && buff->char_at(1) == 33) {
+  int firstline = buff->line_end(0);
+  // either a pointer to the newline character ending the line
+  // or a pointer to one character beyond the end of the buffer
+  char *shell;
+  shell = buff->text_range(firstline - 4, firstline);
+  if (strcmp(shell, "bash") == 0) is_bash = true;
+  else is_bash = false;
+  free(shell);
+}
+if (color_resume) color_cb();} {}
+}
+
+Function {style_unfinished_cb(int, void*)} {return_type void
+} {
+  comment {call back for highlight data
+if style 'A' is found,
+this call back will be called.
+void *cbArg will be passed as arguement
+fl_alert("style_unfinished_cb");} {in_source not_in_header
+  }
+}
+
 Function {busybox(char *textbuff, char *scanned_text)} {return_type int
 } {
   code {return compare_keywords(
@@ -810,29 +827,19 @@ Function {busybox(char *textbuff, char *scanned_text)} {return_type int
   scanned_text,
   66
 );} {}
-  code {/*
-return compare_keywords(
-  &textbuff[0],
-  applets,
-  sizeof(applets)/sizeof(*applets),
-  &scanned_text[0],
-  66
-);
-*/} {}
 }
 
 Function {bourne_builtins(char *textbuff, char *scanned_text)} {return_type int
 } {
   comment {compare_keywords(
-address_to_buff,
-array,
-sizeof_array,
-address_to_result,
-color_style(A~K)
-} {in_source not_in_header
+  address_to_buff,
+  array,
+  sizeof_array,
+  address_to_result,
+  color_style(A~K)
+)} {in_source not_in_header
   }
-  codeblock {if (is_bash)} {open
-  } {
+  codeblock {if (is_bash)} {} {
     code {int bourne_again;
 bourne_again = compare_keywords(
   textbuff,
@@ -894,74 +901,6 @@ if (ascii > 122 && ascii < 127) {
   return 4;
 }
 return 0;} {}
-  comment {Just a bunch of special characters
-Old bloated codes
-const char *special_characters[] = {
-  "!", // 33
-  "\\"", // 34
-  "\#", // 35
-  "$", // 36
-  "%", // 37
-  "&", // 38
-  "\\'", // 39
-  "(", // 40
-  ")", // 41
-  "*", // 42
-  "+", // 43
-  ",", // 44
-  "-", // 45
-  ".", // 46
-  "/", // 47
-  ":", // 58
-  ";", // 59
-  "<", // 60
-  "=", // 61
-  ">", // 62
-  "\\?", // 63
-  "@", // 64
-  "[", // 91
-  "\\\\", // 92
-  "]", // 93
-  "^", // 94
-  "_", // 95 usually treated as normal string
-  "`", // 96
-  "{", // 123
-  "|", // 124
-  "}" // 125
-  "~" // 126 $HOME
-};
-size_t list_size, prb;
-list_size = sizeof(special_characters) / sizeof(*special_characters);
-
-// assign probe
-const char *probe;
-probe = special_characters[0];
-
-// convert to pointer
-const char *cmp;
-cmp = &ascii;
-
-for (prb = 0; prb < list_size; prb++) {
-  if (strcmp(cmp, probe) == 0) return 1;
-  *probe++;
-}
-return 0;} {in_source not_in_header
-  }
-}
-
-Function {use_coloring()} {return_type void
-} {
-  code {// associate style & buffer
-edit->highlight_data(
-  stylebuf,
-  styletable,
-  sizeof(styletable) / sizeof(styletable[0]),
-  'A',
-  style_unfinished_cb,
-  0 // void*
-);
-// buff->add_modify_callback(style_update, edit);
-// buff->add_modify_callback(modification_cb, edit);} {}
 }
 
 Function {disable_color()} {return_type void
@@ -1293,7 +1232,7 @@ for (;setvar < pos; setvar++) {
 }} {}
 }
 
-Function {scan_forward(char *buff_copy, int bufflen, int pos)} {return_type int
+Function {scan_forward(char *buff_copy, int bufflen, int pos)} {return_type void
 } {
   code {char *scan;
 scan = (char*)malloc(bufflen - pos + 1);
@@ -1303,7 +1242,7 @@ if (scan) {
 } else {
   fl_alert("*** Error, malloc failed ***\\nDisabling the coloring!");
   color_cb();
-  return 1;
+  return;
 }} {}
   code {struct syntax UPDATE;
 // duplicate the struct to preserve VARS values
@@ -1557,14 +1496,14 @@ for (;j < bufflen - pos; j++) \{
 \}} {}
   code {stylebuf->replace(pos, stylebuf->length(), scan);
 /*
-example:
+replace example:
 {'s', 't', 'r', 'i', 'n', 'g'}
 replace(1, 3, "ABC")
 {'s', 'A', 'B', 'C', 'i', 'n', 'g'}
 */
 edit->redisplay_range(pos, buff->length());
 free(scan);
-return 0;} {}
+return;} {}
 }
 
 Function {modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const char *deletedText, void *cbArg)} {return_type void
@@ -1615,7 +1554,8 @@ stylebuf->unselect();
 free(buff_copy);
 return;} {}
   }
-  codeblock {if (color)} {} {
+  codeblock {if (color)} {open
+  } {
     codeblock {if (indenting)} {} {
       code {indenting = false;
 scan_pos = buff->line_start(scan_pos - 2);} {}
@@ -1623,18 +1563,14 @@ scan_pos = buff->line_start(scan_pos - 2);} {}
     codeblock {if (VARS.pssp != scan_pos || indenting)} {} {
       code {setvars(buff_copy, scan_pos);} {}
     }
-    code {// fl_alert("%d\\n", scan_pos);} {}
-    code {int result = scan_forward(buff_copy, bufflen, scan_pos);
-free(buff_copy);} {}
-    codeblock {if (result)} {} {
-      code {// error occur, malloc failed
-return;} {}
-    }
-    code {VARS.pssp = scan_pos;} {}
-    comment {catch exception} {in_source not_in_header
-    }
-    codeblock {if (buff->length() != stylebuf->length())} {} {
-      code {fl_alert(
+    code {scan_forward(buff_copy, bufflen, scan_pos);
+// fl_alert("%d\\n", scan_pos);
+free(buff_copy);
+VARS.pssp = scan_pos;} {}
+    codeblock {if (buff->length() != stylebuf->length())} {open
+    } {
+      code {// catch exception
+fl_alert(
   "!!!Exception occur!!!\\nbuff->length = %d\\nstylebuf->length = %d", // \\nForcing reload...",
   buff->length(),
   stylebuf->length()
@@ -1659,29 +1595,40 @@ Function {close_cb(Fl_Widget*, void* v)} {return_type void
   code {if (check_saved()) exit(0);} {}
 }
 
-Function {ts_cb()} {return_type void
+Function {arg_parser(int argc, char **argv, int &i)} {open return_type int
 } {
-  code {fl_alert("%d", buff->length());
-fl_alert("%s", buff->text());} {}
+  code {if(strcmp(argv[i], "-shell") == 0) {
+  SHELL = "\#!/bin/sh\\n";
+  i++;
+  return 1;
 }
-
-Function {ss_cb()} {return_type void
-} {
-  code {fl_alert("%d", stylebuf->length());
-fl_alert("%s", stylebuf->text());} {}
+if(strcmp(argv[i], "-bash") == 0) {
+  SHELL = "\#!/usr/bin/env bash\\n";
+  i++;
+  return 1;
 }
-
-Function {arg_parser(int argc, char **argv, int &i)} {return_type int
-} {
-  code {return 0;} {}
+if(strcmp(argv[i], "-other") == 0) {
+  SHELL = 0;
+  i++;
+  return 1;
+}
+if(strcmp(argv[i], "-h") == 0) {
+  printf(
+    "%s [-options] [file]\\n"
+    "Set default shebang to\\n"
+    "-shell\\t\#!/bin/sh\\n"
+    "-bash\\t\#!/usr/bin/env bash\\n"
+    "-other\\tother unknown shebang\\n"
+    "The later option will replace any previous one(s)\\n"
+    "Any arguements after the \\"file\\" will be ignored\\n"
+    , basename(argv[0])
+  );
+  exit(0);
+}
+return 0;} {selected
+  }
   comment {http://www.fltk.org/articles.php?L744} {in_source not_in_header
   }
-}
-
-decl {char search_string[2048];} {private global
-}
-
-decl {char replace_string[2048];} {private global
 }
 
 Function {find_dialog()} {return_type void
@@ -1822,7 +1769,7 @@ int rpl_r = buff->search_forward(
 );
 if (rpl_r) {
   buff->remove(rpl_pos, rpl_pos + strlen(search_string));
-  buff->insert(rpl_pos, search_string);
+  buff->insert(rpl_pos, replace_string);
   buff->select(rpl_pos, rpl_pos + strlen(replace_string));
   edit->insert_position(rpl_pos + 1);
   edit->show_insert_position();
@@ -1893,7 +1840,7 @@ delete replace_dialog_window;
 
 Function {} {open
 } {
-  Fl_Window win {open
+  Fl_Window win {
     xywh {640 206 425 320} type Double box PLASTIC_UP_BOX resizable visible
   } {
     Fl_Text_Editor edit {
@@ -1982,25 +1929,18 @@ Function {} {open
         callback {auto_indent_switch();}
         xywh {0 0 30 20}
       }
-      MenuItem ts_btn {
-        label {Text size}
-        callback {ts_cb();}
-        xywh {0 0 30 20} hide deactivate
-      }
-      MenuItem ss_btn {
-        label {Style size}
-        callback {ss_cb();}
-        xywh {0 0 30 20} hide deactivate
-      }
     }
   }
+  code {// arguements
+int arg_file;
+Fl::args(argc, argv, arg_file, &arg_parser);} {}
   code {// editor init
 win->label(title);
 buffer_init();} {}
-  code {use_coloring();} {}
-  code {int arg_file;
-Fl::args(argc, argv, arg_file, &arg_parser);
-if (argc > 1) load_file(argv[arg_file]);} {}
+  codeblock {if (arg_file < argc)} {open
+  } {
+    code {load_file(argv[arg_file]);} {}
+  }
   code {memset(search_string, 0, 2048);
 memset(replace_string, 0, 2048);} {}
   code {win->callback((Fl_Callback *)close_cb, win);} {}
