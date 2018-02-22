@@ -3,7 +3,7 @@
 
 #include "editor4sh.h"
 struct syntax VARS; 
-const char *SHELL = ""; // = "#!/bin/sh\n";
+const char *SHELL = ""; 
 char filename[FL_PATH_MAX], title[FL_PATH_MAX]; 
 char search_string[2048]; 
 char replace_string[2048]; 
@@ -206,9 +206,13 @@ void save_file(const char *newfile) {
     win->label(title);
     changed = false;
     #ifdef __linux__
+    // Note: according to the manual,
+    // fl_ask will be removed in a later FLTK release
+    if (fl_choice("chmod to executable ?", "No", "Yes", NULL)) {
       char chmod[FL_PATH_MAX + 9];
       sprintf(chmod, "chmod +x %s", newfile);
       system(chmod);
+    }
     #endif
   }
 }
@@ -424,6 +428,7 @@ void stylebuf_init() {
   VARS.pssp = 0;
   VARS.cs = 0;
   VARS.p = 0;
+  chk_bash();
   // buff_copy
   int bufflen;
   char *buff_copy;
@@ -1030,7 +1035,11 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
 }
 
 void close_cb(Fl_Widget*, void* v) {
-  if (check_saved()) exit(0);
+  if (check_saved()) {
+    delete edit;
+    delete the_menu_bar;
+    exit(0);
+  }
 }
 
 int arg_parser(int argc, char **argv, int &i) {
@@ -1279,21 +1288,20 @@ void replace_all_cb() {
 }
 
 void close_dialog(Fl_Widget*, void* v) {
-  // fl_alert("Before deleting");
+  // delete the replace_dialog_window
   delete text_in_find;
   delete text_in_replace;
   delete replace_all_btn;
   delete RD_cancel_btn;
   delete replace_next_btn;
   delete replace_dialog_window;
-  // fl_alert("After deleting");
 }
 
 Fl_Double_Window *win=(Fl_Double_Window *)0;
 
 Fl_Text_Editor *edit=(Fl_Text_Editor *)0;
 
-Fl_Menu_Bar *menu_bar=(Fl_Menu_Bar *)0;
+Fl_Menu_Bar *the_menu_bar=(Fl_Menu_Bar *)0;
 
 static void cb_new_bt(Fl_Menu_*, void*) {
   new_cb();
@@ -1347,7 +1355,7 @@ static void cb_indent_switch(Fl_Menu_*, void*) {
   auto_indent_switch();
 }
 
-Fl_Menu_Item menu_menu_bar[] = {
+Fl_Menu_Item menu_the_menu_bar[] = {
  {"File", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&New File", 0x4006e,  (Fl_Callback*)cb_new_bt, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&Open", 0x4006f,  (Fl_Callback*)cb_open, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -1379,11 +1387,11 @@ int main(int argc, char **argv) {
       edit->textsize(20);
       Fl_Group::current()->resizable(edit);
     } // Fl_Text_Editor* edit
-    { menu_bar = new Fl_Menu_Bar(0, 0, 425, 30);
-      menu_bar->box(FL_PLASTIC_UP_BOX);
-      menu_bar->down_box(FL_PLASTIC_DOWN_BOX);
-      menu_bar->menu(menu_menu_bar);
-    } // Fl_Menu_Bar* menu_bar
+    { the_menu_bar = new Fl_Menu_Bar(0, 0, 425, 30);
+      the_menu_bar->box(FL_PLASTIC_UP_BOX);
+      the_menu_bar->down_box(FL_PLASTIC_DOWN_BOX);
+      the_menu_bar->menu(menu_the_menu_bar);
+    } // Fl_Menu_Bar* the_menu_bar
     win->end();
   } // Fl_Double_Window* win
   // arguements

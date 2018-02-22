@@ -4,6 +4,9 @@ INSTDIR = $(DESTDIR)/$(PREFIX)/bin
 TARGET = editor4sh
 OBJ = $(TARGET).o
 
+CXXFLAGS += $(shell fltk-config --cxxflags | sed 's@-I@-isystem @')
+LDFLAGS += $(shell fltk-config --ldflags)
+
 ARCH := $(shell uname -m)
 CXX_FLAGS_i686 := -march=i486 -mtune=i686
 CXX_FLAGS_x86_64 := -mtune=generic
@@ -17,9 +20,6 @@ CXXFLAGS += -Wno-unused-parameter
 
 LDFLAGS += -Wl,-O1 -Wl,-gc-sections
 LDFLAGS += -Wl,-as-needed
-
-CXXFLAGS += $(shell fltk-config --cxxflags | sed 's@-I@-isystem @')
-LDFLAGS += $(shell fltk-config --ldflags)
 
 .PHONY: all clean install
 

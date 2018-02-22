@@ -515,7 +515,7 @@ decl {struct syntax {
 decl {struct syntax VARS;} {private global
 }
 
-decl {const char *SHELL = ""; // = "\#!/bin/sh\\n";} {private global
+decl {const char *SHELL = "";} {private global
 }
 
 decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
@@ -570,7 +570,7 @@ decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
 };} {private global
 }
 
-Function {buffer_init()} {open return_type void
+Function {buffer_init()} {return_type void
 } {
   code {// attach buffer to editor
 buff->text(SHELL);
@@ -611,7 +611,7 @@ return;} {}
 is_bash = false;} {}
 }
 
-Function {shell_cb(int choice)} {open return_type void
+Function {shell_cb(int choice)} {return_type void
 } {
   code {if (choice == 1) {
   SHELL = "\#!/bin/sh\\n";
@@ -681,7 +681,7 @@ edit->show_insert_position();
 if (restyle && color) stylebuf_init();} {}
 }
 
-Function {check_saved()} {return_type int
+Function {check_saved()} {open return_type int
 } {
   code {// 1:good, 0:cancel
 if (!changed) return 1;
@@ -723,7 +723,7 @@ win->label(title);
 changed = false;} {}
 }
 
-Function {save_file(const char *newfile)} {return_type void
+Function {save_file(const char *newfile)} {open return_type void
 } {
   code {// Save file
 // auto append trailing "\\n"
@@ -745,11 +745,16 @@ if (buff->savefile(newfile)) {
   win->label(title);
   changed = false;
   \#ifdef __linux__
+  // Note: according to the manual,
+  // fl_ask will be removed in a later FLTK release
+  if (fl_choice("chmod to executable ?", "No", "Yes", NULL)) {
     char chmod[FL_PATH_MAX + 9];
     sprintf(chmod, "chmod +x %s", newfile);
     system(chmod);
+  }
   \#endif
-}} {}
+}} {selected
+  }
 }
 
 Function {saveas_cb()} {return_type void
@@ -977,7 +982,8 @@ VARS.sq = false;
 VARS.dq = false;
 VARS.pssp = 0;
 VARS.cs = 0;
-VARS.p = 0;} {}
+VARS.p = 0;
+chk_bash();} {}
   code {// buff_copy
 int bufflen;
 char *buff_copy;
@@ -1592,10 +1598,15 @@ buff->char_at(pos), stylebuf->char_at(pos));} {}
 
 Function {close_cb(Fl_Widget*, void* v)} {return_type void
 } {
-  code {if (check_saved()) exit(0);} {}
+  codeblock {if (check_saved())} {open
+  } {
+    code {delete edit;
+delete the_menu_bar;
+exit(0);} {}
+  }
 }
 
-Function {arg_parser(int argc, char **argv, int &i)} {open return_type int
+Function {arg_parser(int argc, char **argv, int &i)} {return_type int
 } {
   code {if(strcmp(argv[i], "-shell") == 0) {
   SHELL = "\#!/bin/sh\\n";
@@ -1828,25 +1839,23 @@ edit->insert_position(current_pos);} {}
 
 Function {close_dialog(Fl_Widget*, void* v)} {return_type void
 } {
-  code {// fl_alert("Before deleting");
+  code {// delete the replace_dialog_window
 delete text_in_find;
 delete text_in_replace;
 delete replace_all_btn;
 delete RD_cancel_btn;
 delete replace_next_btn;
-delete replace_dialog_window;
-// fl_alert("After deleting");} {}
+delete replace_dialog_window;} {}
 }
 
-Function {} {open
-} {
+Function {} {} {
   Fl_Window win {open
     xywh {640 206 425 320} type Double box PLASTIC_UP_BOX resizable visible
   } {
     Fl_Text_Editor edit {
       xywh {1 29 424 288} box PLASTIC_DOWN_FRAME textfont 4 textsize 20 resizable
     }
-    Fl_Menu_Bar menu_bar {open
+    Fl_Menu_Bar the_menu_bar {open
       xywh {0 0 425 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
     } {
       Submenu file_menu {
@@ -1875,7 +1884,7 @@ Function {} {open
         }
       }
       Submenu shell_menu {
-        label Shell open
+        label Shell
         xywh {0 0 67 24}
       } {
         MenuItem sh {
@@ -1890,12 +1899,12 @@ Function {} {open
         }
         MenuItem other {
           label Other
-          callback {shell_cb(0);} selected
+          callback {shell_cb(0);}
           xywh {0 0 30 20} shortcut 0x8006f
         }
       }
       Submenu search_menu {
-        label Search open
+        label Search
         xywh {0 0 63 20}
       } {
         MenuItem find_btn {

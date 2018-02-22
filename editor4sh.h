@@ -528,22 +528,22 @@ extern Fl_Double_Window *win;
 #include <FL/Fl_Text_Editor.H>
 extern Fl_Text_Editor *edit;
 #include <FL/Fl_Menu_Bar.H>
-extern Fl_Menu_Bar *menu_bar;
-extern Fl_Menu_Item menu_menu_bar[];
-#define file_menu (menu_menu_bar+0)
-#define new_bt (menu_menu_bar+1)
-#define open (menu_menu_bar+2)
-#define save (menu_menu_bar+3)
-#define saveas (menu_menu_bar+4)
-#define shell_menu (menu_menu_bar+6)
-#define sh (menu_menu_bar+7)
-#define bash (menu_menu_bar+8)
-#define other (menu_menu_bar+9)
-#define search_menu (menu_menu_bar+11)
-#define find_btn (menu_menu_bar+12)
-#define find_again_btn (menu_menu_bar+13)
-#define replace_btn (menu_menu_bar+14)
-#define replace_again_btn (menu_menu_bar+15)
-#define color_switch (menu_menu_bar+17)
-#define indent_switch (menu_menu_bar+18)
+extern Fl_Menu_Bar *the_menu_bar;
+extern Fl_Menu_Item menu_the_menu_bar[];
+#define file_menu (menu_the_menu_bar+0)
+#define new_bt (menu_the_menu_bar+1)
+#define open (menu_the_menu_bar+2)
+#define save (menu_the_menu_bar+3)
+#define saveas (menu_the_menu_bar+4)
+#define shell_menu (menu_the_menu_bar+6)
+#define sh (menu_the_menu_bar+7)
+#define bash (menu_the_menu_bar+8)
+#define other (menu_the_menu_bar+9)
+#define search_menu (menu_the_menu_bar+11)
+#define find_btn (menu_the_menu_bar+12)
+#define find_again_btn (menu_the_menu_bar+13)
+#define replace_btn (menu_the_menu_bar+14)
+#define replace_again_btn (menu_the_menu_bar+15)
+#define color_switch (menu_the_menu_bar+17)
+#define indent_switch (menu_the_menu_bar+18)
 #endif
