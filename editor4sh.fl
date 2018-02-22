@@ -753,8 +753,7 @@ if (buff->savefile(newfile)) {
     system(chmod);
   }
   \#endif
-}} {selected
-  }
+}} {}
 }
 
 Function {saveas_cb()} {return_type void
@@ -1687,33 +1686,34 @@ if (sf_r) {
 }} {}
 }
 
-Function {replace_dialog()} {} {
+Function {replace_dialog()} {open
+} {
   Fl_Window replace_dialog_window {
-    label Replace
+    label Replace open selected
     xywh {484 562 320 155} type Double hide
   } {
     Fl_Input text_in_find {
       label {Find:}
-      xywh {72 20 230 30} box PLASTIC_DOWN_BOX
+      xywh {72 20 230 30}
     }
     Fl_Input text_in_replace {
       label {Replace:}
-      xywh {72 60 230 30} box PLASTIC_DOWN_BOX
+      xywh {72 60 230 30}
     }
     Fl_Button replace_all_btn {
       label {Replace All}
       callback {replace_all_cb();}
-      xywh {15 110 85 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
+      xywh {15 110 85 30}
     }
     Fl_Return_Button replace_next_btn {
       label {Replace Next}
       callback {replace_next_cb();}
-      xywh {105 110 130 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
+      xywh {105 110 130 30}
     }
     Fl_Button RD_cancel_btn {
       label Cancel
       callback {close_dialog(replace_dialog_window, 0);}
-      xywh {240 110 64 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
+      xywh {240 110 64 30}
     }
   }
   code {/*
@@ -1848,15 +1848,16 @@ delete replace_next_btn;
 delete replace_dialog_window;} {}
 }
 
-Function {} {} {
+Function {} {open
+} {
   Fl_Window win {open
-    xywh {640 206 425 320} type Double box PLASTIC_UP_BOX resizable visible
+    xywh {640 206 425 320} type Double resizable visible
   } {
     Fl_Text_Editor edit {
-      xywh {1 29 424 288} box PLASTIC_DOWN_FRAME textfont 4 textsize 20 resizable
+      xywh {1 29 424 288} textfont 4 textsize 20 resizable
     }
     Fl_Menu_Bar the_menu_bar {open
-      xywh {0 0 425 30} box PLASTIC_UP_BOX down_box PLASTIC_DOWN_BOX
+      xywh {0 0 425 30}
     } {
       Submenu file_menu {
         label File
@@ -1884,7 +1885,7 @@ Function {} {} {
         }
       }
       Submenu shell_menu {
-        label Shell
+        label Shell open
         xywh {0 0 67 24}
       } {
         MenuItem sh {

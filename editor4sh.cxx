@@ -1146,24 +1146,16 @@ static void cb_RD_cancel_btn(Fl_Button*, void*) {
 Fl_Double_Window* replace_dialog() {
   { replace_dialog_window = new Fl_Double_Window(320, 155, "Replace");
     { text_in_find = new Fl_Input(72, 20, 230, 30, "Find:");
-      text_in_find->box(FL_PLASTIC_DOWN_BOX);
     } // Fl_Input* text_in_find
     { text_in_replace = new Fl_Input(72, 60, 230, 30, "Replace:");
-      text_in_replace->box(FL_PLASTIC_DOWN_BOX);
     } // Fl_Input* text_in_replace
     { replace_all_btn = new Fl_Button(15, 110, 85, 30, "Replace All");
-      replace_all_btn->box(FL_PLASTIC_UP_BOX);
-      replace_all_btn->down_box(FL_PLASTIC_DOWN_BOX);
       replace_all_btn->callback((Fl_Callback*)cb_replace_all_btn);
     } // Fl_Button* replace_all_btn
     { replace_next_btn = new Fl_Return_Button(105, 110, 130, 30, "Replace Next");
-      replace_next_btn->box(FL_PLASTIC_UP_BOX);
-      replace_next_btn->down_box(FL_PLASTIC_DOWN_BOX);
       replace_next_btn->callback((Fl_Callback*)cb_replace_next_btn);
     } // Fl_Return_Button* replace_next_btn
     { RD_cancel_btn = new Fl_Button(240, 110, 64, 30, "Cancel");
-      RD_cancel_btn->box(FL_PLASTIC_UP_BOX);
-      RD_cancel_btn->down_box(FL_PLASTIC_DOWN_BOX);
       RD_cancel_btn->callback((Fl_Callback*)cb_RD_cancel_btn);
     } // Fl_Button* RD_cancel_btn
     replace_dialog_window->end();
@@ -1380,16 +1372,12 @@ Fl_Menu_Item menu_the_menu_bar[] = {
 
 int main(int argc, char **argv) {
   { win = new Fl_Double_Window(425, 320);
-    win->box(FL_PLASTIC_UP_BOX);
     { edit = new Fl_Text_Editor(1, 29, 424, 288);
-      edit->box(FL_PLASTIC_DOWN_FRAME);
       edit->textfont(4);
       edit->textsize(20);
       Fl_Group::current()->resizable(edit);
     } // Fl_Text_Editor* edit
     { the_menu_bar = new Fl_Menu_Bar(0, 0, 425, 30);
-      the_menu_bar->box(FL_PLASTIC_UP_BOX);
-      the_menu_bar->down_box(FL_PLASTIC_DOWN_BOX);
       the_menu_bar->menu(menu_the_menu_bar);
     } // Fl_Menu_Bar* the_menu_bar
     win->end();
