@@ -7,7 +7,7 @@ const char *SHELL = "";
 char filename[FL_PATH_MAX], title[FL_PATH_MAX]; 
 char search_string[2048]; 
 char replace_string[2048]; 
-bool color = false, auto_indent = false, indenting = false, changed = false, is_bash = false; 
+bool color = false, auto_indent = false, indenting = false, changed = false, is_bash = false, set_executable = false; 
 Fl_Text_Buffer *buff = new Fl_Text_Buffer(); 
 Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer(); 
 #define TS 14
@@ -192,7 +192,7 @@ void save_file(const char *newfile) {
   buff_end = buff->length();
   char last_char;
   last_char = buff->char_at(buff_end - 1);
-  if (last_char != 10) {
+  if (buff_end > 0 && last_char != 10) {
     buff->append("\n");
     edit->insert_position(buff_end + 1);
     edit->show_insert_position();
@@ -205,15 +205,16 @@ void save_file(const char *newfile) {
     strcpy(title, newfile);
     win->label(title);
     changed = false;
-    #ifdef __linux__
+    // #ifdef __linux__
     // Note: according to the manual,
     // fl_ask will be removed in a later FLTK release
-    if (fl_choice("chmod to executable ?", "No", "Yes", NULL)) {
+    // if (fl_choice("chmod to executable ?", "No", "Yes", NULL)) {
+    if (set_executable) {
       char chmod[FL_PATH_MAX + 9];
       sprintf(chmod, "chmod +x %s", newfile);
       system(chmod);
     }
-    #endif
+    // #endif
   }
 }
 
@@ -457,6 +458,15 @@ void color_cb() {
   edit->redisplay_range(0, buff->length());
 }
 
+void exec_cb() {
+  set_executable = !set_executable;
+  if (set_executable) {
+    executable_switch->label("Don't set exec");
+  } else {
+    executable_switch->label("Set executable");
+  }
+}
+
 int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii) {
   const char *needle;
   size_t nl; // needle length
@@ -515,12 +525,13 @@ void setvars(char *buff_copy, int pos) {
   VARS.cm = false;
   VARS.es = false;
   VARS.ds = false;
-  VARS.se = false;
   VARS.bq = false;
   VARS.sq = false;
   VARS.dq = false;
   VARS.cs = 0;
   VARS.p = 0;
+  VARS.arith = 0;
+  VARS.se = 0;
   int setvar = 0;
   
   // [[fallthrough]]; --> suppress the fallthrough warning
@@ -564,14 +575,20 @@ void setvars(char *buff_copy, int pos) {
             VARS.ds = false;
             continue;
           case 40: // $(...
+            if (buff_copy[setvar+2] == 40) {
+              // arithmetic syntax $((X+Y))
+              VARS.p += 2;
+              VARS.arith++;
+              setvar += 2;
+              continue;
+            }
             VARS.cs++;
             VARS.p++;
             setvar++;
             VARS.ds = false;
             continue;
           case 123: // shell expansion ${
-            // cb++;
-            VARS.se = true; // a bit redundant
+            VARS.se++;
             setvar++;
             VARS.ds = true;
             continue;
@@ -579,14 +596,14 @@ void setvars(char *buff_copy, int pos) {
           case 9: // tab
           case 10: // newline
           case 32: // space
-          case 47: // regular expression /$/
             // trailing dolor_sign$
             VARS.ds = false;
-            // resume default
-            continue;
+            break;
         }
         if (is_special(buff_copy[setvar+1])) {
-          // invalid variable $, or such
+          // invalid variable or
+          // trailing dolor_sign$
+          // such as regular expression /$/
           // resume default
           VARS.ds = false;
         }
@@ -605,6 +622,20 @@ void setvars(char *buff_copy, int pos) {
         VARS.p++;
         break;
       case 41: // )
+        if (VARS.arith > 0) {
+          VARS.p--;
+          if (buff_copy[setvar+1] == 41) {
+            // closing arithmetic syntax ))
+            VARS.arith--;
+            VARS.p--;
+            setvar++;
+            if (VARS.arith == 0) VARS.ds = false;
+            continue;
+          }
+          // unterminated arithmetic syntax
+          // may cause error
+          break;
+        }
         if (VARS.cm || VARS.sq) break;
         if (VARS.ds) VARS.ds = !VARS.ds;
         if (VARS.dq && VARS.cs == 0) break;
@@ -623,12 +654,11 @@ void setvars(char *buff_copy, int pos) {
         if (VARS.ds || VARS.se) {
           // end of variable
           VARS.ds = false;
-          VARS.se = false;
+          VARS.se--;
           continue;
         }
         break;
     }
-    if (VARS.se) continue;
     if (VARS.cm) {
       if (buff_copy[setvar] == 10) VARS.cm = false;
       continue;
@@ -638,6 +668,7 @@ void setvars(char *buff_copy, int pos) {
       if (buff_copy[setvar] == 39) VARS.sq = !VARS.sq;
       continue;
     }
+    if (VARS.se || VARS.arith) continue;
     if (VARS.ds) {
       if (is_special(buff_copy[setvar+1]) || buff_copy[setvar+1] == 0) {
         // end of variable
@@ -694,6 +725,7 @@ void scan_forward(char *buff_copy, int bufflen, int pos) {
   struct syntax UPDATE;
   // duplicate the struct to preserve VARS values
   UPDATE = VARS;
+  /*
   int j = 0;
   int m = 0;
   bool key = true;
@@ -873,6 +905,281 @@ void scan_forward(char *buff_copy, int bufflen, int pos) {
       continue;
     }
     if (UPDATE.dq) scan[j] = 'G';
+    if (UPDATE.ds) {
+      scan[j] = 'I';
+      if (is_special(buff_copy[j+pos+1]) || buff_copy[j+pos+1] == 0) {
+        // end of variable
+        UPDATE.ds = false;
+        continue;
+      }
+    }
+    if (UPDATE.es) {
+      // this char = backslash (92)
+      if (buff_copy[j+pos+1]) {
+        // char not null
+        scan[j] = 'H';
+        scan[j+1] = 'H';
+      }
+      if (UPDATE.dq && buff_copy[j+pos+1] == 39) {
+        // echo "\'" --> \'
+        UPDATE.es = false;
+        continue;
+      }
+      if (buff_copy[j+pos+1] == 120) {
+        // hex \xFF 48~57, 65~70, 97~102
+        bool hex = ((
+          (buff_copy[j+pos+2] > 47 && buff_copy[j+pos+2] < 58) ||
+          (buff_copy[j+pos+2] > 64 && buff_copy[j+pos+2] < 71) ||
+          (buff_copy[j+pos+2] > 96 && buff_copy[j+pos+2] < 103)
+        ) && (
+          (buff_copy[j+pos+3] > 47 && buff_copy[j+pos+3] < 58) ||
+          (buff_copy[j+pos+3] > 64 && buff_copy[j+pos+3] < 71) ||
+          (buff_copy[j+pos+3] > 96 && buff_copy[j+pos+3] < 103)
+        ));
+        if (hex) {
+          scan[j+2] = 'H';
+          scan[j+3] = 'H';
+          j+=2;
+        }
+      }
+      j++;
+      UPDATE.es = false;
+      continue;
+    }
+    if (UPDATE.cs > 0) {
+      if (scan[j] == 'A') scan[j] = 'E';
+      if (buff_copy[j+pos] == 41) {
+        // )
+        scan[j] = 'E';
+        UPDATE.cs--;
+        if (UPDATE.p > UPDATE.cs) UPDATE.cs++;
+      }
+      // continue;
+    }
+    if (UPDATE.bq) {
+      if (scan[j] == 'A') scan[j] = 'E';
+      // continue;
+    }
+    if (key) {
+      // scan for keywords
+      key = false;
+      if (UPDATE.dq) {
+        if (UPDATE.cs == 0 && !UPDATE.bq)
+        continue;
+      }
+      // when keywords are overlapped, the "bourne_builtins" one is used
+      m = bourne_builtins(&buff_copy[j+pos], &scan[j]);
+      if (m == 0) m = busybox(&buff_copy[j+pos], &scan[j]);
+      j += m;
+    }
+  }
+  */
+  int j = 0;
+  int m = 0;
+  bool key = true;
+  
+  // [[fallthrough]]; --> suppress the fallthrough warning
+  
+  for (;j < bufflen - pos; j++) {
+    switch(buff_copy[j+pos]) {
+      case 10: // newline
+        if (UPDATE.cm) UPDATE.cm = !UPDATE.cm;
+        [[fallthrough]];
+      case 9: // tab
+        [[fallthrough]];
+      case 32: // space
+        key = true;
+        if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+        scan[j] = buff_copy[j+pos];
+        continue;
+      case 34: // "double quote"
+        if (UPDATE.cm) break;
+        if (!UPDATE.sq) {
+          UPDATE.dq = !UPDATE.dq;
+          scan[j] = 'G';
+          if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+          continue;
+        }
+        break;
+      case 35: // #comment
+        key = false;
+        if (!UPDATE.ds && !UPDATE.sq && !UPDATE.dq && !UPDATE.se) {
+          UPDATE.cm = true;
+          scan[j] = 'J';
+        }
+        break;
+      case 36: // $dolor_sign
+        key = false;
+        if (UPDATE.cm || UPDATE.sq) break;
+        UPDATE.ds = true;
+        switch(buff_copy[j+pos+1]) {
+          case 33: // built-in variable $!
+          case 35: // built-in variable $#
+          case 36: // built-in variable $$
+          case 42: // built-in variable $*
+          case 45: // built-in variable $-
+          case 63: // built-in variable $?
+          case 64: // built-in variable $@
+          case 95: // built-in variable $_
+            scan[j] = 'I';
+            j++;
+            scan[j] = 'I';
+            UPDATE.ds = false;
+            continue;
+          case 40: // $(...
+            if (buff_copy[j+pos+2] == 40) {
+              // arithmetic syntax $((X+Y))
+              UPDATE.p += 2;
+              UPDATE.arith++;
+              scan[j] = 'I';
+              scan[j+1] = 'I';
+              scan[j+2] = 'I';
+              j += 2;
+              continue;
+            }
+            UPDATE.cs++;
+            UPDATE.p++;
+            scan[j] = 'E';
+            j++;
+            scan[j] = 'E';
+            key = true;
+            UPDATE.ds = false;
+            continue;
+          case 123: // shell expansion ${
+            UPDATE.se++;
+            scan[j] = 'I';
+            j++;
+            scan[j] = 'I';
+            UPDATE.ds = true;
+            continue;
+          case 0: // '\0'
+          case 9: // tab
+          case 10: // newline
+          case 32: // space
+            // trailing dolor_sign$
+            UPDATE.ds = false;
+            // resume default
+            scan[j] = 'A';
+            break;
+          default:
+            scan[j] = 'I';
+        }
+        if (is_special(buff_copy[j+pos+1])) {
+          // invalid variable or
+          // trailing dolor_sign$
+          // such as regular expression /$/
+          // resume default
+          UPDATE.ds = false;
+          scan[j] = 'A';
+        }
+        break;
+      case 39: // 'single quote'
+        key = false;
+        if (UPDATE.cm) break;
+        // single quote is always
+        // treated literally in double quote
+        if (!UPDATE.dq) {
+          UPDATE.sq = !UPDATE.sq;
+          scan[j] = 'F';
+          continue;
+        }
+        break;
+      case 40: // (
+        key = true;
+        if (UPDATE.cm || UPDATE.sq || UPDATE.dq) break;
+        UPDATE.p++;
+        scan[j] = 'C';
+        break;
+      case 41: // )
+        if (UPDATE.arith > 0) {
+          scan[j] = 'I';
+          UPDATE.p--;
+          if (buff_copy[j+pos+1] == 41) {
+            // closing arithmetic syntax ))
+            UPDATE.arith--;
+            UPDATE.p--;
+            j++;
+            scan[j] = 'I';
+            if (UPDATE.arith == 0) UPDATE.ds = false;
+            continue;
+          }
+          // unterminated arithmetic syntax
+          // may cause error
+          break;
+        }
+        key = false;
+        if (UPDATE.cm || UPDATE.sq) break;
+        if (UPDATE.ds) UPDATE.ds = !UPDATE.ds;
+        if (UPDATE.dq) {
+          if (UPDATE.cs == 0)
+          break;
+        }
+        UPDATE.p--;
+        scan[j] = 'C';
+        break;
+      case 92: // \escapes
+        key = false;
+        if (!UPDATE.cm && !UPDATE.sq) UPDATE.es = true;
+        break; // other escape
+      case 96: // `back quote`
+        key = true;
+        if (UPDATE.cm || UPDATE.sq) break;
+        scan[j] = 'E';
+        UPDATE.ds = false;
+        UPDATE.bq = !UPDATE.bq;
+        continue;
+      case 123: // {
+        scan[j] = 'C';
+        break;
+      case 125: // }
+        if (UPDATE.cm || UPDATE.sq) break;
+        if (UPDATE.ds || UPDATE.se) {
+          // end of variable
+          UPDATE.ds = false;
+          UPDATE.se--;
+          scan[j] = 'I';
+          continue;
+        }
+        scan[j] = 'C';
+        break;
+      case 38: // &
+      case 59: // ;
+      case 60: // <
+      case 62: // >
+      case 124: // >
+        // 38, 59, 60, 62, 124 fall through to default
+        key = true;
+        [[fallthrough]];
+      default:
+        if (UPDATE.cm || UPDATE.es || UPDATE.sq) break;
+        // scan[j] = 'A'; --> overwrite the keywords
+        if (is_special(buff_copy[j+pos])) scan[j] = 'C';
+    }
+    if (UPDATE.cm) {
+      switch (buff_copy[j+pos]) {
+        case 10: // newline
+          UPDATE.cm = false;
+          [[fallthrough]];
+        case 9: // tab
+        case 32: // space
+          scan[j] = buff_copy[j+pos];
+          break;
+        default:
+          scan[j] = 'J';
+      }
+      continue;
+    }
+    if (UPDATE.sq) {
+      // 'single quote' ignore escapes
+      scan[j] = 'F';
+      if (buff_copy[j+pos] == 39) UPDATE.sq = !UPDATE.sq;
+      continue;
+    }
+    if (UPDATE.dq) scan[j] = 'G';
+    if (UPDATE.se || UPDATE.arith) {
+      scan[j] = 'I';
+      continue;
+    }
     if (UPDATE.ds) {
       scan[j] = 'I';
       if (is_special(buff_copy[j+pos+1]) || buff_copy[j+pos+1] == 0) {
@@ -1347,6 +1654,10 @@ static void cb_indent_switch(Fl_Menu_*, void*) {
   auto_indent_switch();
 }
 
+static void cb_executable_switch(Fl_Menu_*, void*) {
+  exec_cb();
+}
+
 Fl_Menu_Item menu_the_menu_bar[] = {
  {"File", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&New File", 0x4006e,  (Fl_Callback*)cb_new_bt, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
@@ -1367,6 +1678,7 @@ Fl_Menu_Item menu_the_menu_bar[] = {
  {0,0,0,0,0,0,0,0,0},
  {"Colorful", 0,  (Fl_Callback*)cb_color_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Auto Indent", 0,  (Fl_Callback*)cb_indent_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"Set executable", 0,  (Fl_Callback*)cb_executable_switch, 0, 17, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0}
 };
 
@@ -1388,6 +1700,10 @@ int main(int argc, char **argv) {
   // editor init
   win->label(title);
   buffer_init();
+  #ifdef __linux__
+  executable_switch->show();
+  executable_switch->activate();
+  #endif
   if (arg_file < argc) {
     load_file(argv[arg_file]);
   }

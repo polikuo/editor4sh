@@ -473,13 +473,14 @@ struct syntax {
   bool cm; // #comment 35
   bool es; // \escapes 92
   bool ds; // $dolor_sign 36
-  bool se; // ${shell expansion}, ds must be true
   bool bq; // `back quote command substitution` 96
   bool sq; // 'single quote' 39
   bool dq; // "double quote" 34
   int pssp; // previous scan starting position
   int cs; // $(command substitution)
   int p; // (parentheses) 40 41
+  int se; // ${shell expansion}, ds must be true
+  int arith; // arithmetic syntax $((X+Y))
 };
 void buffer_init();
 void chk_bash();
@@ -501,6 +502,7 @@ void auto_indent_switch();
 void auto_indent_cb(int lsp, int pos, char *line);
 void stylebuf_init();
 void color_cb();
+void exec_cb();
 int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii);
 void setvars(char *buff_copy, int pos);
 void scan_forward(char *buff_copy, int bufflen, int pos);
@@ -546,4 +548,5 @@ extern Fl_Menu_Item menu_the_menu_bar[];
 #define replace_again_btn (menu_the_menu_bar+15)
 #define color_switch (menu_the_menu_bar+17)
 #define indent_switch (menu_the_menu_bar+18)
+#define executable_switch (menu_the_menu_bar+19)
 #endif
