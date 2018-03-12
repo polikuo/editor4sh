@@ -242,9 +242,8 @@ void open_cb() {
 void load_file(char *newfile) {
   bool color_resume = color;
   // disable color before loading
-  if (color_resume) {
-    color_cb();
-  }
+  if (color_resume) color_cb();
+  
   int lf;
   lf = buff->loadfile(newfile);
   if (lf) {
@@ -400,6 +399,7 @@ void auto_indent_cb(int lsp, int pos, char *line) {
     */
     free(indention);
     free(line);
+    stylebuf->insert(current_pos, "\n");
     edit->insert_position(current_pos - 1);
     return;
   }
@@ -1283,10 +1283,6 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
     );
     return;
   }
-  // int scan_pos
-  int scan_pos;
-  // scan from the start of the line to check for key words
-  scan_pos = buff->line_start(pos);
   // buff_copy
   int bufflen;
   char *buff_copy;
@@ -1299,22 +1295,21 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
     return;
   }
   if (nInserted == 0 && nDeleted == 0) {
-    if (color) {
-      setvars(buff_copy, scan_pos);
-    }
     // selection change
     stylebuf->unselect();
     free(buff_copy);
     return;
   }
   if (color) {
+    // int scan_pos
+    int scan_pos;
+    // scan from the start of the line to check for key words
+    scan_pos = buff->line_start(pos);
     if (indenting) {
       indenting = false;
       scan_pos = buff->line_start(scan_pos - 2);
     }
-    if (VARS.pssp != scan_pos || indenting) {
-      setvars(buff_copy, scan_pos);
-    }
+    setvars(buff_copy, scan_pos);
     scan_forward(buff_copy, bufflen, scan_pos);
     // fl_alert("%d\n", scan_pos);
     free(buff_copy);
@@ -1504,11 +1499,15 @@ void replace_next_cb() {
     1
   );
   if (rpl_r) {
+    bool auto_indent_resume = auto_indent;
+    // disable auto_indent to prevent freezing
+    if (auto_indent_resume) auto_indent = !auto_indent;
     buff->remove(rpl_pos, rpl_pos + strlen(TIF));
     buff->insert(rpl_pos, TIR);
     buff->select(rpl_pos, rpl_pos + strlen(TIR));
-    edit->insert_position(rpl_pos + 1);
+    edit->insert_position(rpl_pos + strlen(TIR));
     edit->show_insert_position();
+    if (auto_indent_resume) auto_indent = !auto_indent;
   } else {
     fl_alert("No occurrences of \'%s\' found!", TIF);
   }
@@ -1529,11 +1528,15 @@ void replace_again_cb() {
     1
   );
   if (rpl_r) {
+    bool auto_indent_resume = auto_indent;
+    // disable auto_indent to prevent freezing
+    if (auto_indent_resume) auto_indent = !auto_indent;
     buff->remove(rpl_pos, rpl_pos + strlen(search_string));
     buff->insert(rpl_pos, replace_string);
     buff->select(rpl_pos, rpl_pos + strlen(replace_string));
-    edit->insert_position(rpl_pos + 1);
+    edit->insert_position(rpl_pos + strlen(replace_string));
     edit->show_insert_position();
+    if (auto_indent_resume) auto_indent = !auto_indent;
   } else {
     fl_alert("No occurrences of \'%s\' found!", search_string);
   }
@@ -1554,13 +1557,13 @@ void replace_all_cb() {
   int found = 1;
   int srh_pos = 0;
   int rpl_pos = 0;
-  bool resume = false;
   
+  // disable auto_indent to prevent freezing
+  bool auto_indent_resume = auto_indent;
+  if (auto_indent_resume) auto_indent = !auto_indent;
   // disable coloring to speed up looping
-  if (color) {
-    color_cb();
-    resume = true;
-  }
+  bool color_resume = color;
+  if (color_resume) color_cb();
   
   while (found) {
     found = buff->search_forward(
@@ -1572,12 +1575,13 @@ void replace_all_cb() {
     if (found) {
       buff->remove(rpl_pos, rpl_pos + strlen(TIF));
       buff->insert(rpl_pos, TIR);
+      srh_pos = rpl_pos + strlen(TIF);
       counts++;
     }
-    if (rpl_pos > srh_pos) srh_pos = rpl_pos + 1;
   }
   
-  if (resume) color_cb();
+  if (auto_indent_resume) auto_indent = !auto_indent;
+  if (color_resume) color_cb();
   
   if (counts) fl_message("Replaced %d occurrences.", counts);
   else fl_alert("No occurrences of \'%s\' found!", TIF);
@@ -1684,7 +1688,7 @@ Fl_Menu_Item menu_the_menu_bar[] = {
 
 int main(int argc, char **argv) {
   { win = new Fl_Double_Window(425, 320);
-    { edit = new Fl_Text_Editor(1, 29, 424, 288);
+    { edit = new Fl_Text_Editor(1, 29, 424, 289);
       edit->textfont(4);
       edit->textsize(20);
       Fl_Group::current()->resizable(edit);

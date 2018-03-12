@@ -724,7 +724,7 @@ win->label(title);
 changed = false;} {}
 }
 
-Function {save_file(const char *newfile)} {open return_type void
+Function {save_file(const char *newfile)} {return_type void
 } {
   code {// Save file
 // auto append trailing "\\n"
@@ -786,9 +786,8 @@ Function {load_file(char *newfile)} {return_type void
 } {
   code {bool color_resume = color;
 // disable color before loading
-if (color_resume) {
-  color_cb();
-}
+if (color_resume) color_cb();
+
 int lf;
 lf = buff->loadfile(newfile);
 if (lf) {
@@ -917,7 +916,7 @@ stylebuf->text("");
 // edit->highlight_data(NULL, NULL, NULL, NULL, NULL);} {}
 }
 
-Function {auto_indent_switch()} {open return_type void
+Function {auto_indent_switch()} {return_type void
 } {
   code {auto_indent = !auto_indent;
 if (auto_indent) {
@@ -927,7 +926,7 @@ if (auto_indent) {
 }} {}
 }
 
-Function {auto_indent_cb(int lsp, int pos, char *line)} {return_type void
+Function {auto_indent_cb(int lsp, int pos, char *line)} {open return_type void
 } {
   comment {lsp: line start pos
 pos: insert position
@@ -954,6 +953,7 @@ if (ai == 0) {
   */
   free(indention);
   free(line);
+  stylebuf->insert(current_pos, "\\n");
   edit->insert_position(current_pos - 1);
   return;
 }
@@ -1014,7 +1014,7 @@ if (color) {
 edit->redisplay_range(0, buff->length());} {}
 }
 
-Function {exec_cb()} {open return_type void
+Function {exec_cb()} {return_type void
 } {
   code {set_executable = !set_executable;
 if (set_executable) {
@@ -1830,12 +1830,14 @@ strcat(title, "*");
 win->label(title);} {}
     }
   }
-  codeblock {if (nInserted > 0 && nDeleted > 0)} {} {
+  codeblock {if (nInserted > 0 && nDeleted > 0)} {open
+  } {
     code {// This only happens when a user undo changes
 // do nothing...
 return;} {}
   }
-  codeblock {if (auto_indent && nInserted == 1 && buff->char_at(pos) == 10)} {} {
+  codeblock {if (auto_indent && nInserted == 1 && buff->char_at(pos) == 10)} {open
+  } {
     code {indenting = true;
 auto_indent_cb(
   buff->line_start(pos),
@@ -1844,10 +1846,6 @@ auto_indent_cb(
 );
 return;} {}
   }
-  code {// int scan_pos
-int scan_pos;
-// scan from the start of the line to check for key words
-scan_pos = buff->line_start(pos);} {}
   code {// buff_copy
 int bufflen;
 char *buff_copy;
@@ -1859,10 +1857,8 @@ if (buff_copy) {
   color_cb();
   return;
 }} {}
-  codeblock {if (nInserted == 0 && nDeleted == 0)} {} {
-    codeblock {if (color)} {} {
-      code {setvars(buff_copy, scan_pos);} {}
-    }
+  codeblock {if (nInserted == 0 && nDeleted == 0)} {open
+  } {
     code {// selection change
 stylebuf->unselect();
 free(buff_copy);
@@ -1870,13 +1866,16 @@ return;} {}
   }
   codeblock {if (color)} {open
   } {
-    codeblock {if (indenting)} {} {
+    code {// int scan_pos
+int scan_pos;
+// scan from the start of the line to check for key words
+scan_pos = buff->line_start(pos);} {}
+    codeblock {if (indenting)} {open
+    } {
       code {indenting = false;
 scan_pos = buff->line_start(scan_pos - 2);} {}
     }
-    codeblock {if (VARS.pssp != scan_pos || indenting)} {} {
-      code {setvars(buff_copy, scan_pos);} {}
-    }
+    code {setvars(buff_copy, scan_pos);} {}
     code {scan_forward(buff_copy, bufflen, scan_pos);
 // fl_alert("%d\\n", scan_pos);
 free(buff_copy);
@@ -2045,7 +2044,7 @@ replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
 replace_dialog_window->show();} {}
 }
 
-Function {replace_next_cb()} {return_type void
+Function {replace_next_cb()} {open return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -2061,18 +2060,22 @@ int rpl_r = buff->search_forward(
   1
 );
 if (rpl_r) {
+  bool auto_indent_resume = auto_indent;
+  // disable auto_indent to prevent freezing
+  if (auto_indent_resume) auto_indent = !auto_indent;
   buff->remove(rpl_pos, rpl_pos + strlen(TIF));
   buff->insert(rpl_pos, TIR);
   buff->select(rpl_pos, rpl_pos + strlen(TIR));
-  edit->insert_position(rpl_pos + 1);
+  edit->insert_position(rpl_pos + strlen(TIR));
   edit->show_insert_position();
+  if (auto_indent_resume) auto_indent = !auto_indent;
 } else {
   fl_alert("No occurrences of \\'%s\\' found!", TIF);
 }
 close_dialog(replace_dialog_window, 0);} {}
 }
 
-Function {replace_again_cb()} {return_type void
+Function {replace_again_cb()} {open return_type void
 } {
   code {// text in buffer is blank
 if (*search_string == 0) {
@@ -2087,17 +2090,21 @@ int rpl_r = buff->search_forward(
   1
 );
 if (rpl_r) {
+  bool auto_indent_resume = auto_indent;
+  // disable auto_indent to prevent freezing
+  if (auto_indent_resume) auto_indent = !auto_indent;
   buff->remove(rpl_pos, rpl_pos + strlen(search_string));
   buff->insert(rpl_pos, replace_string);
   buff->select(rpl_pos, rpl_pos + strlen(replace_string));
-  edit->insert_position(rpl_pos + 1);
+  edit->insert_position(rpl_pos + strlen(replace_string));
   edit->show_insert_position();
+  if (auto_indent_resume) auto_indent = !auto_indent;
 } else {
   fl_alert("No occurrences of \\'%s\\' found!", search_string);
 }} {}
 }
 
-Function {replace_all_cb()} {return_type void
+Function {replace_all_cb()} {open return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -2113,13 +2120,13 @@ int counts = 0;
 int found = 1;
 int srh_pos = 0;
 int rpl_pos = 0;
-bool resume = false;
 
+// disable auto_indent to prevent freezing
+bool auto_indent_resume = auto_indent;
+if (auto_indent_resume) auto_indent = !auto_indent;
 // disable coloring to speed up looping
-if (color) {
-  color_cb();
-  resume = true;
-}
+bool color_resume = color;
+if (color_resume) color_cb();
 
 while (found) {
   found = buff->search_forward(
@@ -2131,18 +2138,20 @@ while (found) {
   if (found) {
     buff->remove(rpl_pos, rpl_pos + strlen(TIF));
     buff->insert(rpl_pos, TIR);
+    srh_pos = rpl_pos + strlen(TIF);
     counts++;
   }
-  if (rpl_pos > srh_pos) srh_pos = rpl_pos + 1;
 }
 
-if (resume) color_cb();
+if (auto_indent_resume) auto_indent = !auto_indent;
+if (color_resume) color_cb();
 
 if (counts) fl_message("Replaced %d occurrences.", counts);
 else fl_alert("No occurrences of \\'%s\\' found!", TIF);
 
 close_dialog(replace_dialog_window, 0);
-edit->insert_position(current_pos);} {}
+edit->insert_position(current_pos);} {selected
+  }
 }
 
 Function {close_dialog(Fl_Widget*, void* v)} {return_type void
@@ -2156,13 +2165,12 @@ delete replace_next_btn;
 delete replace_dialog_window;} {}
 }
 
-Function {} {open
-} {
+Function {} {} {
   Fl_Window win {open
-    xywh {567 326 425 320} type Double resizable visible
+    xywh {485 250 425 320} type Double hide resizable
   } {
     Fl_Text_Editor edit {
-      xywh {1 29 424 288} textfont 4 textsize 20 resizable
+      xywh {1 29 424 289} textfont 4 textsize 20 resizable
     }
     Fl_Menu_Bar the_menu_bar {open
       xywh {0 0 425 30}
@@ -2263,8 +2271,7 @@ buffer_init();
 \#ifdef __linux__
 executable_switch->show();
 executable_switch->activate();
-\#endif} {selected
-  }
+\#endif} {}
   codeblock {if (arg_file < argc)} {} {
     code {load_file(argv[arg_file]);} {}
   }
