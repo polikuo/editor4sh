@@ -400,7 +400,7 @@ void auto_indent_cb(int lsp, int pos, char *line) {
     free(indention);
     free(line);
     stylebuf->insert(current_pos, "\n");
-    edit->insert_position(current_pos - 1);
+    // edit->insert_position(current_pos - 1);
     return;
   }
   indention[ai] = 0; // '\0'
@@ -1575,7 +1575,7 @@ void replace_all_cb() {
     if (found) {
       buff->remove(rpl_pos, rpl_pos + strlen(TIF));
       buff->insert(rpl_pos, TIR);
-      srh_pos = rpl_pos + strlen(TIF);
+      srh_pos = rpl_pos + strlen(TIR);
       counts++;
     }
   }

@@ -97,6 +97,7 @@ decl {const char *applets[] = {
   "env",
   "envdir",
   "envuidgid",
+  "ether-wake",
   "expand",
   "expr",
   "fakeidentd",
@@ -106,11 +107,13 @@ decl {const char *applets[] = {
   "fdflush",
   "fdformat",
   "fdisk",
+  "fgconsole",
   "fgrep",
   "find",
   "findfs",
   "flash_lock",
   "flash_unlock",
+  "flock",
   "fold",
   "free",
   "freeramdisk",
@@ -126,6 +129,7 @@ decl {const char *applets[] = {
   "grep",
   "gunzip",
   "gzip",
+  "halt",
   "hd",
   "hdparm",
   "head",
@@ -181,6 +185,9 @@ decl {const char *applets[] = {
   "ls",
   "lsattr",
   "lsmod",
+  "lsof",
+  "lzcat",
+  "lzma",
   "lzmacat",
   "lzop",
   "lzopcat",
@@ -199,6 +206,7 @@ decl {const char *applets[] = {
   "mkpasswd",
   "mkswap",
   "mktemp",
+  "modinfo",
   "modprobe",
   "more",
   "mount",
@@ -206,12 +214,14 @@ decl {const char *applets[] = {
   "mt",
   "mv",
   "nameif",
+  "nbd-client",
   "nc",
   "netstat",
   "nice",
   "nmeter",
   "nohup",
   "nslookup",
+  "ntpd",
   "od",
   "openvt",
   "passwd",
@@ -224,10 +234,12 @@ decl {const char *applets[] = {
   "pivot_root",
   "pkill",
   "popmaildir",
+  "poweroff",
   "printenv",
   "printf",
   "ps",
   "pscan",
+  "pstree",
   "pwd",
   "raidautorun",
   "rdate",
@@ -235,10 +247,12 @@ decl {const char *applets[] = {
   "readlink",
   "readprofile",
   "realpath",
+  "reboot",
   "reformime",
   "renice",
   "reset",
   "resize",
+  "rev",
   "rm",
   "rmdir",
   "rmmod",
@@ -317,8 +331,10 @@ decl {const char *applets[] = {
   "unexpand",
   "uniq",
   "unix2dos",
+  "unlink",
   "unlzma",
   "unlzop",
+  "unxz",
   "unzip",
   "uptime",
   "usleep",
@@ -336,6 +352,8 @@ decl {const char *applets[] = {
   "who",
   "whoami",
   "xargs",
+  "xz",
+  "xzcat",
   "yes",
   "zcat",
   "zcip"
@@ -823,7 +841,7 @@ fl_alert("style_unfinished_cb");} {in_source not_in_header
   }
 }
 
-Function {busybox(char *textbuff, char *scanned_text)} {return_type int
+Function {busybox(char *textbuff, char *scanned_text)} {open return_type int
 } {
   code {return compare_keywords(
   textbuff,
@@ -954,7 +972,7 @@ if (ai == 0) {
   free(indention);
   free(line);
   stylebuf->insert(current_pos, "\\n");
-  edit->insert_position(current_pos - 1);
+  // edit->insert_position(current_pos - 1);
   return;
 }
 indention[ai] = 0; // '\\0'
@@ -2138,7 +2156,7 @@ while (found) {
   if (found) {
     buff->remove(rpl_pos, rpl_pos + strlen(TIF));
     buff->insert(rpl_pos, TIR);
-    srh_pos = rpl_pos + strlen(TIF);
+    srh_pos = rpl_pos + strlen(TIR);
     counts++;
   }
 }
