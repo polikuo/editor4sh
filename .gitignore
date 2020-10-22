@@ -1,0 +1,14 @@
+.deps/
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache
+build-aux
+config.h.in
+config.log
+config.status
+configure
+editor4sh
+editor4sh-*.tar.gz
+editor4sh.o
+stamp-h1

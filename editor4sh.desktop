@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Shell Editor
+Exec=editor4sh
+Type=Application
+Icon=editor4sh

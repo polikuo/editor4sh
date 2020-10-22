@@ -1,8 +1,8 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0304
+version 1.0305
 header_name {.h}
 code_name {.cxx}
-comment {author polikuo 2018} {in_source in_header
+comment {author polikuo 2020} {in_source in_header
 }
 
 decl {\#include <FL/Fl_Double_Window.H>} {public global
@@ -21,6 +21,9 @@ decl {\#include <FL/Fl_File_Chooser.H>} {public global
 }
 
 decl {\#include <errno.h>} {public global
+}
+
+decl {\#include "config.h"} {public global
 }
 
 comment {busybox
@@ -537,6 +540,9 @@ decl {struct syntax VARS;} {private global
 decl {const char *SHELL = "";} {private global
 }
 
+decl {int TS = 14;} {private global
+}
+
 decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
 }
 
@@ -553,9 +559,6 @@ decl {Fl_Text_Buffer *buff = new Fl_Text_Buffer();} {private global
 }
 
 decl {Fl_Text_Buffer *stylebuf = new Fl_Text_Buffer();} {private global
-}
-
-decl {\#define TS 14} {private global
 }
 
 comment {Style table
@@ -577,12 +580,12 @@ K - bourne_constructs} {in_source not_in_header
 decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
   { FL_BLACK, FL_COURIER, TS },
   { 82, FL_COURIER_BOLD, TS },
-  { FL_DARK_MAGENTA, FL_COURIER_BOLD,TS },
+  { FL_DARK_MAGENTA, FL_COURIER_BOLD, TS },
   { 92, FL_COURIER_BOLD, TS },
   { FL_DARK_GREEN, FL_COURIER, TS },
   { FL_BLUE, FL_COURIER_BOLD, TS },
-  { FL_DARK_CYAN, FL_COURIER,TS },
-  { FL_DARK_YELLOW, FL_COURIER,TS },
+  { FL_DARK_CYAN, FL_COURIER, TS },
+  { FL_DARK_YELLOW, FL_COURIER, TS },
   { FL_DARK_RED, FL_COURIER_BOLD, TS },
   { FL_DARK2, FL_COURIER_ITALIC, TS },
   { FL_MAGENTA, FL_COURIER_BOLD, TS }
@@ -841,7 +844,7 @@ fl_alert("style_unfinished_cb");} {in_source not_in_header
   }
 }
 
-Function {busybox(char *textbuff, char *scanned_text)} {open return_type int
+Function {busybox(char *textbuff, char *scanned_text)} {return_type int
 } {
   code {return compare_keywords(
   textbuff,
@@ -944,7 +947,7 @@ if (auto_indent) {
 }} {}
 }
 
-Function {auto_indent_cb(int lsp, int pos, char *line)} {open return_type void
+Function {auto_indent_cb(int lsp, int pos, char *line)} {return_type void
 } {
   comment {lsp: line start pos
 pos: insert position
@@ -1096,7 +1099,7 @@ if (k != elements) {
 return 0;} {}
 }
 
-Function {setvars(char *buff_copy, int pos)} {open return_type void
+Function {setvars(char *buff_copy, int pos)} {return_type void
 } {
   code {// VARS init
 VARS.cm = false;
@@ -1288,7 +1291,7 @@ for (;setvar < pos; setvar++) {
 }} {}
 }
 
-Function {scan_forward(char *buff_copy, int bufflen, int pos)} {open return_type void
+Function {scan_forward(char *buff_copy, int bufflen, int pos)} {return_type void
 } {
   code {char *scan;
 scan = (char*)malloc(bufflen - pos + 1);
@@ -2062,7 +2065,7 @@ replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
 replace_dialog_window->show();} {}
 }
 
-Function {replace_next_cb()} {open return_type void
+Function {replace_next_cb()} {return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -2093,7 +2096,7 @@ if (rpl_r) {
 close_dialog(replace_dialog_window, 0);} {}
 }
 
-Function {replace_again_cb()} {open return_type void
+Function {replace_again_cb()} {return_type void
 } {
   code {// text in buffer is blank
 if (*search_string == 0) {
@@ -2122,7 +2125,7 @@ if (rpl_r) {
 }} {}
 }
 
-Function {replace_all_cb()} {open return_type void
+Function {replace_all_cb()} {return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -2168,8 +2171,7 @@ if (counts) fl_message("Replaced %d occurrences.", counts);
 else fl_alert("No occurrences of \\'%s\\' found!", TIF);
 
 close_dialog(replace_dialog_window, 0);
-edit->insert_position(current_pos);} {selected
-  }
+edit->insert_position(current_pos);} {}
 }
 
 Function {close_dialog(Fl_Widget*, void* v)} {return_type void
@@ -2183,12 +2185,13 @@ delete replace_next_btn;
 delete replace_dialog_window;} {}
 }
 
-Function {} {} {
+Function {} {open
+} {
   Fl_Window win {open
-    xywh {485 250 425 320} type Double hide resizable
+    xywh {808 707 425 320} type Double resizable visible
   } {
-    Fl_Text_Editor edit {
-      xywh {1 29 424 289} textfont 4 textsize 20 resizable
+    Fl_Text_Editor edit {selected
+      xywh {0 30 425 290} textfont 4 textsize 20 resizable
     }
     Fl_Menu_Bar the_menu_bar {open
       xywh {0 0 425 30}

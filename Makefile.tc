@@ -1,5 +1,8 @@
 PREFIX = /usr/local
 INSTDIR = $(DESTDIR)/$(PREFIX)/bin
+PIXMAPS = $(DESTDIR)/$(PREFIX)/share/pixmaps
+APPDESK = $(DESTDIR)/$(PREFIX)/share/applications
+MYICON = clipart3363684.png
 
 TARGET = editor4sh
 OBJ = $(TARGET).o
@@ -10,6 +13,10 @@ LDFLAGS += $(shell fltk-config --ldflags)
 ARCH := $(shell uname -m)
 CXX_FLAGS_i686 := -march=i486 -mtune=i686
 CXX_FLAGS_x86_64 := -mtune=generic
+CXX_FLAGS_armv6 := -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp
+CXX_FLAGS_armv7 := -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp
+CXX_FLAGS_armv7l := -march=armv6zk -mtune=arm1176jzf-s -mfpu=vfp
+CXX_FLAGS_aarch64 := -march=armv8-a+crc -mtune=cortex-a72
 CXXFLAGS += $(CXX_FLAGS_$(ARCH))
 CXXFLAGS += -Os -s -Wall -Wextra
 CXXFLAGS += -fno-rtti -fno-exceptions
@@ -34,5 +41,8 @@ clean:
 	rm -f $(TARGET) $(OBJ)
 
 install: all
-	mkdir -p $(INSTDIR)
+	mkdir -p $(INSTDIR) $(PIXMAPS) $(APPDESK)
 	cp -a $(TARGET) $(INSTDIR)
+	cp $(MYICON) $(PIXMAPS)/$(TARGET).png
+	cp $(TARGET).desktop $(APPDESK)
+	echo "X-FullPathIcon=$(PREFIX)/share/pixmaps/$(TARGET).png" >> $(APPDESK)/$(TARGET).desktop
