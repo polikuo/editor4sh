@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0305
+version 1.0400
 header_name {.h}
 code_name {.cxx}
 comment {author polikuo 2020} {in_source in_header
@@ -18,6 +18,9 @@ decl {\#include <FL/Fl_Button.H>} {public global
 }
 
 decl {\#include <FL/Fl_File_Chooser.H>} {public global
+}
+
+decl {\#include<cstdlib>} {public global
 }
 
 decl {\#include <errno.h>} {public global
@@ -540,7 +543,7 @@ decl {struct syntax VARS;} {private global
 decl {const char *SHELL = "";} {private global
 }
 
-decl {int TS = 14;} {private global
+decl {int TS = 20;} {selected private global
 }
 
 decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
@@ -937,17 +940,18 @@ stylebuf->text("");
 // edit->highlight_data(NULL, NULL, NULL, NULL, NULL);} {}
 }
 
-Function {auto_indent_switch()} {return_type void
+Function {auto_indent_switch()} {open return_type void
 } {
   code {auto_indent = !auto_indent;
 if (auto_indent) {
   indent_switch->label("No  Indent");
 } else {
   indent_switch->label("AutoIndent");
-}} {}
+}
+the_menu_bar->redraw();} {}
 }
 
-Function {auto_indent_cb(int lsp, int pos, char *line)} {return_type void
+Function {auto_indent_cb(int lsp, int pos, char *line)} {open return_type void
 } {
   comment {lsp: line start pos
 pos: insert position
@@ -1022,7 +1026,7 @@ free(buff_copy);
 return;} {}
 }
 
-Function {color_cb()} {return_type void
+Function {color_cb()} {open return_type void
 } {
   code {color = !color;
 if (color) {
@@ -1032,17 +1036,19 @@ if (color) {
   disable_color();
   color_switch->label("Colorful");
 }
+the_menu_bar->redraw();
 edit->redisplay_range(0, buff->length());} {}
 }
 
-Function {exec_cb()} {return_type void
+Function {exec_cb()} {open return_type void
 } {
   code {set_executable = !set_executable;
 if (set_executable) {
   executable_switch->label("Don't set exec");
 } else {
   executable_switch->label("Set executable");
-}} {}
+}
+the_menu_bar->redraw();} {}
 }
 
 Function {compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii)} {return_type int
@@ -2188,13 +2194,13 @@ delete replace_dialog_window;} {}
 Function {} {open
 } {
   Fl_Window win {open
-    xywh {808 707 425 320} type Double resizable visible
+    xywh {0 0 720 320} type Double resizable visible
   } {
-    Fl_Text_Editor edit {selected
-      xywh {0 30 425 290} textfont 4 textsize 20 resizable
+    Fl_Text_Editor edit {
+      xywh {0 30 720 290} textfont 4 textsize 20 resizable
     }
     Fl_Menu_Bar the_menu_bar {open
-      xywh {0 0 425 30}
+      xywh {0 0 720 30}
     } {
       Submenu file_menu {
         label File
