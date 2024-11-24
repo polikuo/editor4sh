@@ -39,13 +39,7 @@ Fl_Text_Display::Style_Table_Entry styletable[] = {
   { FL_MAGENTA, FL_COURIER_BOLD, TS }
 };
 
-void buffer_init() {
-  // attach buffer to editor
-  buff->text(SHELL);
-  edit->buffer(buff);
-  edit->insert_position(strlen(SHELL));
-  edit->show_insert_position();
-  buff->add_modify_callback(modification_cb, edit);
+void assign_style() {
   // associate style & buffer
   edit->highlight_data(
     stylebuf,
@@ -55,8 +49,18 @@ void buffer_init() {
     style_unfinished_cb,
     0 // void*
   );
+}
+
+void buffer_init() {
+  // attach buffer to editor
+  buff->text(SHELL);
+  edit->buffer(buff);
+  edit->insert_position(strlen(SHELL));
+  edit->show_insert_position();
+  buff->add_modify_callback(modification_cb, edit);
   // buff->add_modify_callback(style_update, edit);
   // buff->add_modify_callback(modification_cb, edit);
+  assign_style();
 }
 
 void chk_bash() {
@@ -461,13 +465,26 @@ void color_cb() {
 }
 
 void exec_cb() {
-  set_executable = !set_executable;
-  if (set_executable) {
-    executable_switch->label("Don't set exec");
-  } else {
-    executable_switch->label("Set executable");
+  if(strlen(filename)){
+    if (set_executable) {
+      char chmod[2048] = "chmod -x ";
+      strcat(chmod, filename);
+      if(system(chmod)) fl_alert("chmod failed");
+      else {
+        executable_switch->label("Set executable");
+        set_executable = !set_executable;
+      }
+    } else {
+      char chmod[2048] = "chmod +x ";
+      strcat(chmod, filename);
+      if(system(chmod)) fl_alert("chmod failed");
+      else {
+        executable_switch->label("Unset exec bit");
+        set_executable = !set_executable;
+      }
+    }
+    the_menu_bar->redraw();
   }
-  the_menu_bar->redraw();
 }
 
 int compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii) {
@@ -1402,6 +1419,21 @@ void find_dialog() {
   strcpy(search_string, SS);
 }
 
+int font_dialog() {
+  const char *FS = fl_input("Size ?", "20");
+  // input is blank
+  if (FS == NULL || *FS == 0) return 1;
+  int f = 0;
+  for (size_t i = 0; i < strlen(FS); i++) {
+    // 0~9 ascii 48~57
+    if (FS[i] > 57 || FS[i] < 48) return 1;
+    f += FS[i] - 48;
+    f *= 10;
+  }
+  TS = f / 10;
+  return 0;
+}
+
 void find_again_dialog() {
   if (*search_string == 0) {
     // Search string is blank
@@ -1448,7 +1480,7 @@ static void cb_RD_cancel_btn(Fl_Button*, void*) {
   close_dialog(replace_dialog_window, 0);
 }
 
-Fl_Double_Window* replace_dialog() {
+void replace_dialog() {
   { replace_dialog_window = new Fl_Double_Window(320, 155, "Replace");
     { text_in_find = new Fl_Input(72, 20, 230, 30, "Find:");
     } // Fl_Input* text_in_find
@@ -1484,7 +1516,6 @@ Fl_Double_Window* replace_dialog() {
   text_in_replace->value(replace_string);
   replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
   replace_dialog_window->show();
-  return replace_dialog_window;
 }
 
 void replace_next_cb() {
@@ -1603,6 +1634,18 @@ void close_dialog(Fl_Widget*, void* v) {
   delete replace_dialog_window;
 }
 
+void fs_cb(int s) {
+  if (s) TS = s;
+  else if(font_dialog()) {
+    fl_alert("Bad Number");
+    return;
+  }
+  for (int i = 0; i < 11; i++) styletable[i].size = TS;
+  edit->textsize(TS);
+  edit->redisplay_range(0, buff->length());
+  edit->redraw();
+}
+
 Fl_Double_Window *win=(Fl_Double_Window *)0;
 
 Fl_Text_Editor *edit=(Fl_Text_Editor *)0;
@@ -1653,6 +1696,18 @@ static void cb_replace_again_btn(Fl_Menu_*, void*) {
   replace_again_cb();
 }
 
+static void cb_fs14(Fl_Menu_*, void*) {
+  fs_cb(14);
+}
+
+static void cb_fs20(Fl_Menu_*, void*) {
+  fs_cb(20);
+}
+
+static void cb_fsc(Fl_Menu_*, void*) {
+  fs_cb(0);
+}
+
 static void cb_color_switch(Fl_Menu_*, void*) {
   color_cb();
 }
@@ -1682,6 +1737,11 @@ Fl_Menu_Item menu_the_menu_bar[] = {
  {"Find A&gain", FL_CTRL|'g',  (Fl_Callback*)cb_find_again_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"&Replace", FL_CTRL|'r',  (Fl_Callback*)cb_replace_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Replace &Again", FL_CTRL|'t',  (Fl_Callback*)cb_replace_again_btn, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {"Font Size", 0,  0, 0, 64, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"14", 0,  (Fl_Callback*)cb_fs14, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"20", 0,  (Fl_Callback*)cb_fs20, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
+ {"custom", 0,  (Fl_Callback*)cb_fsc, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {0,0,0,0,0,0,0,0,0},
  {"Colorful", 0,  (Fl_Callback*)cb_color_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},
  {"Auto Indent", 0,  (Fl_Callback*)cb_indent_switch, 0, 0, (uchar)FL_NORMAL_LABEL, 0, 14, 0},

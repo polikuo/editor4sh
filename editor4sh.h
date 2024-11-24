@@ -502,6 +502,7 @@ struct syntax {
   int se; // ${shell expansion}, ds must be true
   int arith; // arithmetic syntax $((X+Y))
 };
+void assign_style();
 void buffer_init();
 void chk_bash();
 void shell_cb(int choice);
@@ -530,6 +531,7 @@ void modification_cb(int pos, int nInserted, int nDeleted, int nRestyled, const 
 void close_cb(Fl_Widget*, void* v);
 int arg_parser(int argc, char **argv, int &i);
 void find_dialog();
+int font_dialog();
 void find_again_dialog();
 #include <FL/Fl_Double_Window.H>
 extern Fl_Double_Window *replace_dialog_window;
@@ -541,11 +543,12 @@ extern Fl_Button *replace_all_btn;
 #include <FL/Fl_Return_Button.H>
 extern Fl_Return_Button *replace_next_btn;
 extern Fl_Button *RD_cancel_btn;
-Fl_Double_Window* replace_dialog();
+void replace_dialog();
 void replace_next_cb();
 void replace_again_cb();
 void replace_all_cb();
 void close_dialog(Fl_Widget*, void* v);
+void fs_cb(int s);
 extern Fl_Double_Window *win;
 #include <FL/Fl_Text_Editor.H>
 extern Fl_Text_Editor *edit;
@@ -566,7 +569,11 @@ extern Fl_Menu_Item menu_the_menu_bar[];
 #define find_again_btn (menu_the_menu_bar+13)
 #define replace_btn (menu_the_menu_bar+14)
 #define replace_again_btn (menu_the_menu_bar+15)
-#define color_switch (menu_the_menu_bar+17)
-#define indent_switch (menu_the_menu_bar+18)
-#define executable_switch (menu_the_menu_bar+19)
+#define fs_sub (menu_the_menu_bar+17)
+#define fs14 (menu_the_menu_bar+18)
+#define fs20 (menu_the_menu_bar+19)
+#define fsc (menu_the_menu_bar+20)
+#define color_switch (menu_the_menu_bar+22)
+#define indent_switch (menu_the_menu_bar+23)
+#define executable_switch (menu_the_menu_bar+24)
 #endif

@@ -543,7 +543,7 @@ decl {struct syntax VARS;} {private global
 decl {const char *SHELL = "";} {private global
 }
 
-decl {int TS = 20;} {selected private global
+decl {int TS = 20;} {private global
 }
 
 decl {char filename[FL_PATH_MAX], title[FL_PATH_MAX];} {private global
@@ -595,15 +595,9 @@ decl {Fl_Text_Display::Style_Table_Entry styletable[] = {
 };} {private global
 }
 
-Function {buffer_init()} {return_type void
+Function {assign_style()} {open return_type void
 } {
-  code {// attach buffer to editor
-buff->text(SHELL);
-edit->buffer(buff);
-edit->insert_position(strlen(SHELL));
-edit->show_insert_position();
-buff->add_modify_callback(modification_cb, edit);
-// associate style & buffer
+  code {// associate style & buffer
 edit->highlight_data(
   stylebuf,
   styletable,
@@ -611,12 +605,23 @@ edit->highlight_data(
   'A',
   style_unfinished_cb,
   0 // void*
-);
-// buff->add_modify_callback(style_update, edit);
-// buff->add_modify_callback(modification_cb, edit);} {}
+);} {}
 }
 
-Function {chk_bash()} {return_type void
+Function {buffer_init()} {open return_type void
+} {
+  code {// attach buffer to editor
+buff->text(SHELL);
+edit->buffer(buff);
+edit->insert_position(strlen(SHELL));
+edit->show_insert_position();
+buff->add_modify_callback(modification_cb, edit);
+// buff->add_modify_callback(style_update, edit);
+// buff->add_modify_callback(modification_cb, edit);
+assign_style();} {}
+}
+
+Function {chk_bash()} {open return_type void
 } {
   codeblock {if (buff->char_at(0) == 35 && buff->char_at(1) == 33)} {} {
     comment {boolean is_bash
@@ -706,7 +711,7 @@ edit->show_insert_position();
 if (restyle && color) stylebuf_init();} {}
 }
 
-Function {check_saved()} {return_type int
+Function {check_saved()} {open return_type int
 } {
   code {// 1:good, 0:cancel
 if (!changed) return 1;
@@ -932,7 +937,7 @@ if (ascii > 122 && ascii < 127) {
 return 0;} {}
 }
 
-Function {disable_color()} {return_type void
+Function {disable_color()} {open return_type void
 } {
   code {// buff->remove_modify_callback(modification_cb, edit);
 // hopefully disable the style thing
@@ -940,7 +945,7 @@ stylebuf->text("");
 // edit->highlight_data(NULL, NULL, NULL, NULL, NULL);} {}
 }
 
-Function {auto_indent_switch()} {open return_type void
+Function {auto_indent_switch()} {return_type void
 } {
   code {auto_indent = !auto_indent;
 if (auto_indent) {
@@ -951,7 +956,7 @@ if (auto_indent) {
 the_menu_bar->redraw();} {}
 }
 
-Function {auto_indent_cb(int lsp, int pos, char *line)} {open return_type void
+Function {auto_indent_cb(int lsp, int pos, char *line)} {return_type void
 } {
   comment {lsp: line start pos
 pos: insert position
@@ -1026,7 +1031,7 @@ free(buff_copy);
 return;} {}
 }
 
-Function {color_cb()} {open return_type void
+Function {color_cb()} {return_type void
 } {
   code {color = !color;
 if (color) {
@@ -1042,13 +1047,26 @@ edit->redisplay_range(0, buff->length());} {}
 
 Function {exec_cb()} {open return_type void
 } {
-  code {set_executable = !set_executable;
-if (set_executable) {
-  executable_switch->label("Don't set exec");
-} else {
-  executable_switch->label("Set executable");
-}
-the_menu_bar->redraw();} {}
+  code {if(strlen(filename)){
+  if (set_executable) {
+    char chmod[2048] = "chmod -x ";
+    strcat(chmod, filename);
+    if(system(chmod)) fl_alert("chmod failed");
+    else {
+      executable_switch->label("Set executable");
+      set_executable = !set_executable;
+    }
+  } else {
+    char chmod[2048] = "chmod +x ";
+    strcat(chmod, filename);
+    if(system(chmod)) fl_alert("chmod failed");
+    else {
+      executable_switch->label("Unset exec bit");
+      set_executable = !set_executable;
+    }
+  }
+  the_menu_bar->redraw();
+}} {}
 }
 
 Function {compare_keywords(char *text, const char *keys[], size_t elements, char *result, char ascii)} {return_type int
@@ -1998,6 +2016,22 @@ if (sf_r) {
 strcpy(search_string, SS);} {}
 }
 
+Function {font_dialog()} {open return_type int
+} {
+  code {const char *FS = fl_input("Size ?", "20");
+// input is blank
+if (FS == NULL || *FS == 0) return 1;
+int f = 0;
+for (size_t i = 0; i < strlen(FS); i++) {
+  // 0~9 ascii 48~57
+  if (FS[i] > 57 || FS[i] < 48) return 1;
+  f += FS[i] - 48;
+  f *= 10;
+}
+TS = f / 10;
+return 0;} {}
+}
+
 Function {find_again_dialog()} {return_type void
 } {
   code {if (*search_string == 0) {
@@ -2021,7 +2055,8 @@ if (sf_r) {
 }} {}
 }
 
-Function {replace_dialog()} {} {
+Function {replace_dialog()} {return_type void
+} {
   Fl_Window replace_dialog_window {
     label Replace open
     xywh {484 562 320 155} type Double hide
@@ -2071,7 +2106,7 @@ replace_dialog_window->callback((Fl_Callback *)close_dialog, win);
 replace_dialog_window->show();} {}
 }
 
-Function {replace_next_cb()} {return_type void
+Function {replace_next_cb()} {open return_type void
 } {
   code {const char *TIF = text_in_find->value();
 const char *TIR = text_in_replace->value();
@@ -2191,6 +2226,19 @@ delete replace_next_btn;
 delete replace_dialog_window;} {}
 }
 
+Function {fs_cb(int s)} {open return_type void
+} {
+  code {if (s) TS = s;
+else if(font_dialog()) {
+  fl_alert("Bad Number");
+  return;
+}
+for (int i = 0; i < 11; i++) styletable[i].size = TS;
+edit->textsize(TS);
+edit->redisplay_range(0, buff->length());
+edit->redraw();} {}
+}
+
 Function {} {open
 } {
   Fl_Window win {open
@@ -2272,6 +2320,26 @@ Function {} {open
           xywh {0 0 30 20} shortcut 0x40074
         }
       }
+      Submenu fs_sub {
+        label {Font Size} selected
+        xywh {0 0 100 20}
+      } {
+        MenuItem fs14 {
+          label 14
+          callback {fs_cb(14);}
+          xywh {0 0 100 20}
+        }
+        MenuItem fs20 {
+          label 20
+          callback {fs_cb(20);}
+          xywh {0 0 100 20}
+        }
+        MenuItem fsc {
+          label custom
+          callback {fs_cb(0);}
+          xywh {0 0 100 20}
+        }
+      }
       MenuItem color_switch {
         label Colorful
         callback {color_cb();}
@@ -2299,7 +2367,8 @@ buffer_init();
 executable_switch->show();
 executable_switch->activate();
 \#endif} {}
-  codeblock {if (arg_file < argc)} {} {
+  codeblock {if (arg_file < argc)} {open
+  } {
     code {load_file(argv[arg_file]);} {}
   }
   code {memset(search_string, 0, 2048);
